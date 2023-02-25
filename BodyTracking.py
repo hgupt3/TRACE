@@ -1,2 +1,6 @@
 import cv2
-print(cv2.__version__)
+import mediapipe as mp
+
+mp_drawing = mp.solutions.drawing_itls
+mp_pose = mp.solutions.pose
+
