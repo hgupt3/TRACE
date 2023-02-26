@@ -11,7 +11,6 @@ pose1 = mp.solutions.pose.Pose(min_detection_confidence=0.6, min_tracking_confid
 pose2 = mp.solutions.pose.Pose(min_detection_confidence=0.6, min_tracking_confidence=0.6) # Second half player pose declaration
 
 while cam.isOpened():
-    
     ret, video = cam.read()
     video = cv2.flip(video, 1)
     height, width, channels = video.shape
@@ -35,7 +34,6 @@ while cam.isOpened():
     mp.solutions.drawing_utils.draw_landmarks(video, results2.pose_landmarks,mp.solutions.pose.POSE_CONNECTIONS) # Maps results onto video feed
     
     cv2.imshow('TRACE', video)
-    
     if cv2.waitKey(10) & 0xFF == ord('q'):  # Exit video feed when 'q' pressed
         break
     
