@@ -4,9 +4,7 @@ import mediapipe as mp
 # Scanned both halves of video feed seperately for bodies and combined them for final output
 # Mediapipe's pose library maps only one person from the video feed 
 
-
-cam = cv2.VideoCapture(0) # Index is 0 for windows, 1 for mac
-
+cam = cv2.VideoCapture(1) # Index is 0 for windows, 1 for mac
 pose1 = mp.solutions.pose.Pose(min_detection_confidence=0.6, min_tracking_confidence=0.6) # First half player pose declaration
 pose2 = mp.solutions.pose.Pose(min_detection_confidence=0.6, min_tracking_confidence=0.6) # Second half player pose declaration
 
