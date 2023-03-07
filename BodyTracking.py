@@ -28,7 +28,7 @@ crop2_y = 60/100
 crop2_y_offset = 40/100
 crop2_y_centered = 0
 
-# Error checking of all the inputs
+# Error checking for all inputs
 flag = 0
 if not os.path.exists(videoFile):
     print("videoFile: path "+videoFile+" does not exist")
@@ -87,7 +87,7 @@ pose2 = mp.solutions.pose.Pose(model_complexity=0, min_detection_confidence=0.25
 
 while video.isOpened():
     
-    # Player 1 locatating and mapping
+    # Mapping of Player 1
     ret, frame1 = video.read()
     if frame1 is None:
         break
@@ -99,7 +99,7 @@ while video.isOpened():
     crop1.write(frame1)
     crop1.write(frame1)
     
-    # Player 2 locating and mapping
+    # Mapping of Player 2
     ret, frame2 = video.read()
     if frame2 is None:
         break
@@ -115,6 +115,7 @@ video.release()
 crop1.release()
 crop2.release()
 
+# Combining the seperate clips to make a single video file
 clipMain = VideoFileClip(videoFile)
 clip1 = VideoFileClip("./Videos/PostClips/Video1.mp4")
 clip2 = VideoFileClip("./Videos/PostClips/Video2.mp4")
