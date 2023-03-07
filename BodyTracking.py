@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 import os.path
 from sys import exit
+from moviepy.editor import VideoFileClip, CompositeVideoClip
 
 # Scanned both halves of video feed seperately for the two players
 # Mediapipe's pose library maps only one person at a time
@@ -10,15 +11,22 @@ from sys import exit
 videoFile = './Videos/Clips/Clip3.mp4'
 
 # Ratios of the crop width, height, and offsets
+# If centered is 1, program ignores offset and centers frame
 crop1_x = 50/100
-crop1_x_offset = 25/100
+crop1_x_offset = 0/100
+crop1_x_centered = 1
+
 crop1_y = 33/100
 crop1_y_offset = 0/100
+crop1_y_centered = 0
 
 crop2_x = 83/100
-crop2_x_offset = 8/100
+crop2_x_offset = 0/100
+crop2_x_centered = 1
+
 crop2_y = 60/100
 crop2_y_offset = 40/100
+crop2_y_centered = 0
 
 # Error checking of all the inputs
 flag = 0
@@ -47,14 +55,26 @@ height = video.get(4)
 
 # Calculations for pixels used in both crops
 crop1_x = int(width*crop1_x)
-crop1_x_offset = int(width*crop1_x_offset)
 crop1_y = int(height*crop1_y)
-crop1_y_offset = int(height*crop1_y_offset)
+if crop1_x_centered:
+    crop1_x_offset = int((width-crop1_x)/2)
+else:
+    crop1_x_offset = int(width*crop1_x_offset)
+if crop1_y_centered:
+    crop1_y_offset = int((height-crop1_y)/2)
+else:
+    crop1_y_offset = int(height*crop1_y_offset)
 
 crop2_x = int(width*crop2_x)
-crop2_x_offset = int(width*crop2_x_offset)
 crop2_y = int(height*crop2_y)
-crop2_y_offset = int(height*crop2_y_offset)
+if crop2_x_centered:
+    crop2_x_offset = int((width-crop2_x)/2)
+else:
+    crop2_x_offset = int(width*crop2_x_offset)
+if crop2_y_centered:
+    crop2_y_offset = int((height-crop2_y)/2)
+else:
+    crop2_y_offset = int(height*crop2_y_offset)
 
 # Defining where to write cropped videos and in what format
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -94,4 +114,9 @@ while video.isOpened():
 video.release()
 crop1.release()
 crop2.release()
-print("Successfully exported videos to ./Vides/PostClips")
+
+clipMain = VideoFileClip(videoFile)
+clip1 = VideoFileClip("./Videos/PostClips/Video1.mp4")
+clip2 = VideoFileClip("./Videos/PostClips/Video2.mp4")
+result = CompositeVideoClip([clipMain, clip1.set_position((crop1_x_offset,crop1_y_offset)), clip2.set_position((crop2_x_offset,crop2_y_offset))])
+result.write_videofile("./Videos/PostClips/Result.mp4")
