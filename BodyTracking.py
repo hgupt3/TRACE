@@ -115,9 +115,22 @@ video.release()
 crop1.release()
 crop2.release()
 
+# Checking if user wants to delete previous result
+if os.path.exists("./Videos/PostClips/Result.mp4"):
+    overwrite = input("File: Result.mp4 already exists. Do you want to overwrite this file? y/n: ")
+    while overwrite not in ['y', 'n']:
+        overwrite = input("y/n not dectected, try again: ")
+    if (overwrite=='n'):
+        os.remove("./Videos/PostClips/Video1.mp4")
+        os.remove("./Videos/PostClips/Video2.mp4")
+        exit("File creation aborted")
+
 # Combining the seperate clips to make a single video file
 clipMain = VideoFileClip(videoFile)
 clip1 = VideoFileClip("./Videos/PostClips/Video1.mp4")
 clip2 = VideoFileClip("./Videos/PostClips/Video2.mp4")
 result = CompositeVideoClip([clipMain, clip1.set_position((crop1_x_offset,crop1_y_offset)), clip2.set_position((crop2_x_offset,crop2_y_offset))])
 result.write_videofile("./Videos/PostClips/Result.mp4")
+# Removing temporary files
+os.remove("./Videos/PostClips/Video1.mp4")
+os.remove("./Videos/PostClips/Video2.mp4")
