@@ -120,23 +120,14 @@ result = CompositeVideoClip([clipMain, clip1, clip2])
 
 # Checking if user wants to delete previous result or create new file
 if path.exists("./Videos/PostClips/Result.mp4"):
-    overwrite = input("File Result.mp4 already exists. Do you want to overwrite this file or create a new file? overwrite/new/abort: ")
-    while overwrite not in ['overwrite', 'new', 'abort']:
-        overwrite = input("overwrite/new/abort not dectected, try again: ")
-    if (overwrite=='abort'):
-        print("File creation aborted")
-    if (overwrite=='overwrite'):
-        result.write_videofile("./Videos/PostClips/Result.mp4", verbose=False, logger=None)
-        print("File successfully overwritten at /Videos/PostClips/Result.mp4")
-    if (overwrite=='new'):
-        written = 0
-        i = 1
-        while written==0:
-            if not path.exists("./Videos/PostClips/Result"+str(i)+".mp4"):
-                written = 1
-                result.write_videofile("./Videos/PostClips/Result"+str(i)+".mp4", verbose=False, logger=None)
-                print("File successfully created at /Videos/PostClips/Result"+str(i)+".mp4")
-            i += 1
+    i = 1
+    while True:
+        if not path.exists("./Videos/PostClips/Result"+str(i)+".mp4"):
+            written = 1
+            result.write_videofile("./Videos/PostClips/Result"+str(i)+".mp4", verbose=False, logger=None)
+            print("File successfully created at /Videos/PostClips/Result"+str(i)+".mp4")
+            break
+        i += 1
 else:
     result.write_videofile("./Videos/PostClips/Result.mp4", verbose=False, logger=None)
     print("File successfully created at /Videos/PostClips/Result.mp4")
