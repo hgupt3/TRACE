@@ -75,8 +75,8 @@ else:
 
 # Defining where to write cropped videos and in what format
 fourcc = VideoWriter_fourcc(*'mp4v')
-crop1 = VideoWriter('./Videos/PostClips/Video1.mp4',fourcc,25.0,(crop1_x,crop1_y))
-crop2 = VideoWriter('./Videos/PostClips/Video2.mp4',fourcc,25.0,(crop2_x,crop2_y))
+crop1 = VideoWriter('./Videos/Results/Video1.mp4',fourcc,25.0,(crop1_x,crop1_y))
+crop2 = VideoWriter('./Videos/Results/Video2.mp4',fourcc,25.0,(crop2_x,crop2_y))
 
 # Player pose decleration 
 pose1 = solutions.pose.Pose(model_complexity=2, min_detection_confidence=0.25, min_tracking_confidence=0.25)
@@ -114,24 +114,24 @@ crop2.release()
 
 # Combining the seperate clips to make a single video file
 clipMain = VideoFileClip(videoFile)
-clip1 = VideoFileClip("./Videos/PostClips/Video1.mp4").set_position((crop1_x_offset,crop1_y_offset))
-clip2 = VideoFileClip("./Videos/PostClips/Video2.mp4").set_position((crop2_x_offset,crop2_y_offset))
+clip1 = VideoFileClip("./Videos/Results/Video1.mp4").set_position((crop1_x_offset,crop1_y_offset))
+clip2 = VideoFileClip("./Videos/Results/Video2.mp4").set_position((crop2_x_offset,crop2_y_offset))
 result = CompositeVideoClip([clipMain, clip1, clip2])
 
 # Checking if user wants to delete previous result or create new file
-if path.exists("./Videos/PostClips/Result.mp4"):
+if path.exists("./Videos/Results/Result.mp4"):
     i = 1
     while True:
-        if not path.exists("./Videos/PostClips/Result"+str(i)+".mp4"):
+        if not path.exists("./Videos/Results/Result"+str(i)+".mp4"):
             written = 1
-            result.write_videofile("./Videos/PostClips/Result"+str(i)+".mp4", verbose=False, logger=None)
-            print("File successfully created at /Videos/PostClips/Result"+str(i)+".mp4")
+            result.write_videofile("./Videos/Results/Result"+str(i)+".mp4", verbose=False, logger=None)
+            print("File successfully created at /Videos/Results/Result"+str(i)+".mp4")
             break
         i += 1
 else:
-    result.write_videofile("./Videos/PostClips/Result.mp4", verbose=False, logger=None)
-    print("File successfully created at /Videos/PostClips/Result.mp4")
+    result.write_videofile("./Videos/Results/Result.mp4", verbose=False, logger=None)
+    print("File successfully created at /Videos/Results/Result.mp4")
 
 # Removing temporary files
-remove("./Videos/PostClips/Video1.mp4")
-remove("./Videos/PostClips/Video2.mp4")
+remove("./Videos/Results/Video1.mp4")
+remove("./Videos/Results/Video2.mp4")
