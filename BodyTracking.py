@@ -1,13 +1,10 @@
-import cv2
-import mediapipe as mp
-import os.path
+from os import path, remove
 from sys import exit
+from mediapipe import solutions
+from cv2 import VideoCapture,VideoWriter,VideoWriter_fourcc,cvtColor, COLOR_BGR2RGB, COLOR_RGB2BGR
 from moviepy.editor import VideoFileClip, CompositeVideoClip
 
-# Scanned both halves of video feed seperately for the two players
-# Mediapipe's pose library maps only one person at a time
-
-# Video to be used placed in Clips folder
+# Video to be used placed in Clips folderab
 videoFile = './Videos/Clips/Clip3.mp4'
 
 # Ratios of the crop width, height, and offsets
@@ -30,7 +27,7 @@ crop2_y_centered = 0
 
 # Error checking for all inputs
 flag = 0
-if not os.path.exists(videoFile):
+if not path.exists(videoFile):
     print("videoFile: path "+videoFile+" does not exist")
     flag = 1
 if (crop1_x+crop1_x_offset>1):
@@ -49,7 +46,7 @@ if (flag):
     exit()
 
 # Taking video and finding pixel width and height
-video = cv2.VideoCapture(videoFile)
+video = VideoCapture(videoFile)
 width = video.get(3)
 height = video.get(4)
 
@@ -77,13 +74,13 @@ else:
     crop2_y_offset = int(height*crop2_y_offset)
 
 # Defining where to write cropped videos and in what format
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-crop1 = cv2.VideoWriter('./Videos/PostClips/Video1.mp4',fourcc,25.0,(crop1_x,crop1_y))
-crop2 = cv2.VideoWriter('./Videos/PostClips/Video2.mp4',fourcc,25.0,(crop2_x,crop2_y))
+fourcc = VideoWriter_fourcc(*'mp4v')
+crop1 = VideoWriter('./Videos/PostClips/Video1.mp4',fourcc,25.0,(crop1_x,crop1_y))
+crop2 = VideoWriter('./Videos/PostClips/Video2.mp4',fourcc,25.0,(crop2_x,crop2_y))
 
 # Player pose decleration 
-pose1 = mp.solutions.pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25)
-pose2 = mp.solutions.pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25) 
+pose1 = solutions.pose.Pose(model_complexity=2, min_detection_confidence=0.25, min_tracking_confidence=0.25)
+pose2 = solutions.pose.Pose(model_complexity=2, min_detection_confidence=0.25, min_tracking_confidence=0.25) 
 
 while video.isOpened():
     
@@ -92,10 +89,10 @@ while video.isOpened():
     if frame1 is None:
         break
     frame1 = frame1[crop1_y_offset:crop1_y+crop1_y_offset,crop1_x_offset:crop1_x+crop1_x_offset]
-    frame1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2RGB) # Mediapipe requires RGB
-    results1 = pose1.process(frame1) # Coordinate calculation
-    frame1 = cv2.cvtColor(frame1, cv2.COLOR_RGB2BGR)
-    mp.solutions.drawing_utils.draw_landmarks(frame1, results1.pose_landmarks,mp.solutions.pose.POSE_CONNECTIONS) # Maps results onto video feed
+    frame1 = cvtColor(frame1, COLOR_BGR2RGB)
+    results1 = pose1.process(frame1)
+    frame1 = cvtColor(frame1, COLOR_RGB2BGR)
+    solutions.drawing_utils.draw_landmarks(frame1, results1.pose_landmarks,solutions.pose.POSE_CONNECTIONS)
     crop1.write(frame1)
     crop1.write(frame1)
     
@@ -104,10 +101,10 @@ while video.isOpened():
     if frame2 is None:
         break
     frame2 = frame2[crop2_y_offset:crop2_y+crop2_y_offset,crop2_x_offset:crop2_x+crop2_x_offset]
-    frame2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2RGB) # Mediapipe requires RGB
-    results2 = pose2.process(frame2) # Coordinate calculation
-    frame2 = cv2.cvtColor(frame2, cv2.COLOR_RGB2BGR)
-    mp.solutions.drawing_utils.draw_landmarks(frame2, results2.pose_landmarks,mp.solutions.pose.POSE_CONNECTIONS) # Maps results onto video feed
+    frame2 = cvtColor(frame2, COLOR_BGR2RGB)
+    results2 = pose2.process(frame2)
+    frame2 = cvtColor(frame2, COLOR_RGB2BGR)
+    solutions.drawing_utils.draw_landmarks(frame2, results2.pose_landmarks,solutions.pose.POSE_CONNECTIONS)
     crop2.write(frame2)
     crop2.write(frame2)
     
@@ -117,12 +114,12 @@ crop2.release()
 
 # Combining the seperate clips to make a single video file
 clipMain = VideoFileClip(videoFile)
-clip1 = VideoFileClip("./Videos/PostClips/Video1.mp4")
-clip2 = VideoFileClip("./Videos/PostClips/Video2.mp4")
-result = CompositeVideoClip([clipMain, clip1.set_position((crop1_x_offset,crop1_y_offset)), clip2.set_position((crop2_x_offset,crop2_y_offset))])
+clip1 = VideoFileClip("./Videos/PostClips/Video1.mp4").set_position((crop1_x_offset,crop1_y_offset))
+clip2 = VideoFileClip("./Videos/PostClips/Video2.mp4").set_position((crop2_x_offset,crop2_y_offset))
+result = CompositeVideoClip([clipMain, clip1, clip2])
 
-# Checking if user wants to delete previous result
-if os.path.exists("./Videos/PostClips/Result.mp4"):
+# Checking if user wants to delete previous result or create new file
+if path.exists("./Videos/PostClips/Result.mp4"):
     overwrite = input("File Result.mp4 already exists. Do you want to overwrite this file or create a new file? overwrite/new/abort: ")
     while overwrite not in ['overwrite', 'new', 'abort']:
         overwrite = input("overwrite/new/abort not dectected, try again: ")
@@ -135,7 +132,7 @@ if os.path.exists("./Videos/PostClips/Result.mp4"):
         written = 0
         i = 1
         while written==0:
-            if not os.path.exists("./Videos/PostClips/Result"+str(i)+".mp4"):
+            if not path.exists("./Videos/PostClips/Result"+str(i)+".mp4"):
                 written = 1
                 result.write_videofile("./Videos/PostClips/Result"+str(i)+".mp4", verbose=False, logger=None)
                 print("File successfully created at /Videos/PostClips/Result"+str(i)+".mp4")
@@ -145,5 +142,5 @@ else:
     print("File successfully created at /Videos/PostClips/Result.mp4")
 
 # Removing temporary files
-os.remove("./Videos/PostClips/Video1.mp4")
-os.remove("./Videos/PostClips/Video2.mp4")
+remove("./Videos/PostClips/Video1.mp4")
+remove("./Videos/PostClips/Video2.mp4")
