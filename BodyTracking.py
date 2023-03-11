@@ -1,49 +1,37 @@
 from os import path, remove
 from sys import exit
+from dataclasses import dataclass
 from mediapipe import solutions
 from cv2 import VideoCapture,VideoWriter,VideoWriter_fourcc,cvtColor, COLOR_BGR2RGB, COLOR_RGB2BGR
 from moviepy.editor import VideoFileClip, CompositeVideoClip
+from TraceHeader import checkBounds, checkPath, calculatePixels
 
 # Video to be used placed in Clips folderab
 videoFile = './Videos/Clips/Clip3.mp4'
 
 # Ratios of the crop width, height, and offsets
 # If centered is 1, program ignores offset and centers frame
-crop1_x = 50/100
-crop1_x_offset = 0/100
-crop1_x_centered = 1
-
-crop1_y = 33/100
-crop1_y_offset = 0/100
-crop1_y_centered = 0
-
-crop2_x = 83/100
-crop2_x_offset = 0/100
-crop2_x_centered = 1
-
-crop2_y = 60/100
-crop2_y_offset = 40/100
-crop2_y_centered = 0
+class crop1:
+    x: float = 50/100
+    xoffset: float = 0/100
+    xcenter: int = 1 
+    
+    y: float = 33/100
+    yoffset: float = 0/100
+    ycenter: int = 0
+    
+class crop2:
+    x: float = 83/100
+    xoffset: float = 0/100
+    xcenter: int = 1 
+    
+    y: float = 60/100
+    yoffset: float = 40/100
+    ycenter: int = 0
 
 # Error checking for all inputs
-flag = 0
-if not path.exists(videoFile):
-    print("videoFile: path "+videoFile+" does not exist")
-    flag = 1
-if (crop1_x+crop1_x_offset>1):
-    print("crop1: x Coordinates out of bounds")
-    flag = 1
-if (crop1_y+crop1_y_offset>1):
-    print("crop1: y Coordinates out of bounds")
-    flag = 1
-if (crop2_x+crop2_x_offset>1):
-    print("crop2: x Coordinates out of bounds")
-    flag = 1
-if (crop2_y+crop2_y_offset>1):
-    print("crop2: y Coordinates out of bounds")
-    flag = 1
-if (flag):
-    exit()
+checkBounds(crop1, crop2)
+checkPath(videoFile)
 
 # Taking video and finding pixel width and height
 video = VideoCapture(videoFile)
@@ -51,32 +39,13 @@ width = video.get(3)
 height = video.get(4)
 
 # Calculations for pixels used in both crops
-crop1_x = int(width*crop1_x)
-crop1_y = int(height*crop1_y)
-if crop1_x_centered:
-    crop1_x_offset = int((width-crop1_x)/2)
-else:
-    crop1_x_offset = int(width*crop1_x_offset)
-if crop1_y_centered:
-    crop1_y_offset = int((height-crop1_y)/2)
-else:
-    crop1_y_offset = int(height*crop1_y_offset)
-
-crop2_x = int(width*crop2_x)
-crop2_y = int(height*crop2_y)
-if crop2_x_centered:
-    crop2_x_offset = int((width-crop2_x)/2)
-else:
-    crop2_x_offset = int(width*crop2_x_offset)
-if crop2_y_centered:
-    crop2_y_offset = int((height-crop2_y)/2)
-else:
-    crop2_y_offset = int(height*crop2_y_offset)
+crop1 = calculatePixels(crop1, width, height)
+crop2 = calculatePixels(crop2, width, height)
 
 # Defining where to write cropped videos and in what format
 fourcc = VideoWriter_fourcc(*'mp4v')
-crop1 = VideoWriter('./Videos/Results/Video1.mp4',fourcc,25.0,(crop1_x,crop1_y))
-crop2 = VideoWriter('./Videos/Results/Video2.mp4',fourcc,25.0,(crop2_x,crop2_y))
+clip1 = VideoWriter('./Videos/Results/Clip1.mp4',fourcc,25.0,(crop1.x,crop1.y))
+clip2 = VideoWriter('./Videos/Results/Clip2.mp4',fourcc,25.0,(crop2.x,crop2.y))
 
 # Player pose decleration 
 pose1 = solutions.pose.Pose(model_complexity=2, min_detection_confidence=0.25, min_tracking_confidence=0.25)
@@ -88,34 +57,34 @@ while video.isOpened():
     ret, frame1 = video.read()
     if frame1 is None:
         break
-    frame1 = frame1[crop1_y_offset:crop1_y+crop1_y_offset,crop1_x_offset:crop1_x+crop1_x_offset]
+    frame1 = frame1[crop1.yoffset:crop1.y+crop1.yoffset,crop1.xoffset:crop1.x+crop1.xoffset]
     frame1 = cvtColor(frame1, COLOR_BGR2RGB)
     results1 = pose1.process(frame1)
     frame1 = cvtColor(frame1, COLOR_RGB2BGR)
     solutions.drawing_utils.draw_landmarks(frame1, results1.pose_landmarks,solutions.pose.POSE_CONNECTIONS)
-    crop1.write(frame1)
-    crop1.write(frame1)
+    clip1.write(frame1)
+    clip1.write(frame1)
     
     # Mapping of Player 2
     ret, frame2 = video.read()
     if frame2 is None:
         break
-    frame2 = frame2[crop2_y_offset:crop2_y+crop2_y_offset,crop2_x_offset:crop2_x+crop2_x_offset]
+    frame2 = frame2[crop2.yoffset:crop2.y+crop2.yoffset,crop2.xoffset:crop2.x+crop2.xoffset]
     frame2 = cvtColor(frame2, COLOR_BGR2RGB)
     results2 = pose2.process(frame2)
     frame2 = cvtColor(frame2, COLOR_RGB2BGR)
     solutions.drawing_utils.draw_landmarks(frame2, results2.pose_landmarks,solutions.pose.POSE_CONNECTIONS)
-    crop2.write(frame2)
-    crop2.write(frame2)
+    clip2.write(frame2)
+    clip2.write(frame2)
     
 video.release()
-crop1.release()
-crop2.release()
+clip1.release()
+clip2.release()
 
 # Combining the seperate clips to make a single video file
 clipMain = VideoFileClip(videoFile)
-clip1 = VideoFileClip("./Videos/Results/Video1.mp4").set_position((crop1_x_offset,crop1_y_offset))
-clip2 = VideoFileClip("./Videos/Results/Video2.mp4").set_position((crop2_x_offset,crop2_y_offset))
+clip1 = VideoFileClip("./Videos/Results/Clip1.mp4").set_position((crop1.xoffset,crop1.yoffset))
+clip2 = VideoFileClip("./Videos/Results/Clip2.mp4").set_position((crop2.xoffset,crop2.yoffset))
 result = CompositeVideoClip([clipMain, clip1, clip2])
 
 # Checking if user wants to delete previous result or create new file
@@ -133,5 +102,5 @@ else:
     print("File successfully created at /Videos/Results/Result.mp4")
 
 # Removing temporary files
-remove("./Videos/Results/Video1.mp4")
-remove("./Videos/Results/Video2.mp4")
+remove("./Videos/Results/Clip1.mp4")
+remove("./Videos/Results/Clip2.mp4")
