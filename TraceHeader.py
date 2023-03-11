@@ -1,6 +1,8 @@
 from os import path, remove
 from sys import exit
-from moviepy.editor import VideoFileClip, CompositeVideoClip
+
+# Video to be used placed in Clips folder
+videoFile = './Videos/Clips/Clip3.mp4'
 
 def checkBounds(frame1, frame2):
     flag = 0

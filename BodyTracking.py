@@ -4,10 +4,7 @@ from dataclasses import dataclass
 from mediapipe import solutions
 from cv2 import VideoCapture,VideoWriter,VideoWriter_fourcc,cvtColor, COLOR_BGR2RGB, COLOR_RGB2BGR
 from moviepy.editor import VideoFileClip, CompositeVideoClip
-from TraceHeader import checkBounds, checkPath, calculatePixels
-
-# Video to be used placed in Clips folderab
-videoFile = './Videos/Clips/Clip3.mp4'
+from TraceHeader import checkBounds, checkPath, calculatePixels, videoFile
 
 # Ratios of the crop width, height, and offsets
 # If centered is 1, program ignores offset and centers frame
@@ -44,8 +41,8 @@ crop2 = calculatePixels(crop2, width, height)
 
 # Defining where to write cropped videos and in what format
 fourcc = VideoWriter_fourcc(*'mp4v')
-clip1 = VideoWriter('./Videos/Results/Clip1.mp4',fourcc,25.0,(crop1.x,crop1.y))
-clip2 = VideoWriter('./Videos/Results/Clip2.mp4',fourcc,25.0,(crop2.x,crop2.y))
+clip1 = VideoWriter('./Videos/Results/Video1.mp4',fourcc,25.0,(crop1.x,crop1.y))
+clip2 = VideoWriter('./Videos/Results/Video2.mp4',fourcc,25.0,(crop2.x,crop2.y))
 
 # Player pose decleration 
 pose1 = solutions.pose.Pose(model_complexity=2, min_detection_confidence=0.25, min_tracking_confidence=0.25)
@@ -83,11 +80,11 @@ clip2.release()
 
 # Combining the seperate clips to make a single video file
 clipMain = VideoFileClip(videoFile)
-clip1 = VideoFileClip("./Videos/Results/Clip1.mp4").set_position((crop1.xoffset,crop1.yoffset))
-clip2 = VideoFileClip("./Videos/Results/Clip2.mp4").set_position((crop2.xoffset,crop2.yoffset))
+clip1 = VideoFileClip("./Videos/Results/Video1.mp4").set_position((crop1.xoffset,crop1.yoffset))
+clip2 = VideoFileClip("./Videos/Results/Video2.mp4").set_position((crop2.xoffset,crop2.yoffset))
 result = CompositeVideoClip([clipMain, clip1, clip2])
 
-# Checking if user wants to delete previous result or create new file
+# Allows multiple result files
 if path.exists("./Videos/Results/Result.mp4"):
     i = 1
     while True:
@@ -102,5 +99,5 @@ else:
     print("File successfully created at /Videos/Results/Result.mp4")
 
 # Removing temporary files
-remove("./Videos/Results/Clip1.mp4")
-remove("./Videos/Results/Clip2.mp4")
+remove("./Videos/Results/Video1.mp4")
+remove("./Videos/Results/Video2.mp4")
