@@ -62,3 +62,6 @@ def calculatePixels(frame, width, height):
     else:
         frame.yoffset = int(height*frame.yoffset)
     return frame
+
+def determinant(a, b):
+        return a[0] * b[1] - a[1] * b[0]
