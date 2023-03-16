@@ -49,29 +49,24 @@ pose1 = solutions.pose.Pose(model_complexity=2, min_detection_confidence=0.25, m
 pose2 = solutions.pose.Pose(model_complexity=2, min_detection_confidence=0.25, min_tracking_confidence=0.25) 
 
 while video.isOpened():
+    ret, frame = video.read()
+    if frame is None:
+        break
     
     # Mapping of Player 1
-    ret, frame1 = video.read()
-    if frame1 is None:
-        break
-    frame1 = frame1[crop1.yoffset:crop1.y+crop1.yoffset,crop1.xoffset:crop1.x+crop1.xoffset]
+    frame1 = frame[crop1.yoffset:crop1.y+crop1.yoffset,crop1.xoffset:crop1.x+crop1.xoffset]
     frame1 = cvtColor(frame1, COLOR_BGR2RGB)
     results1 = pose1.process(frame1)
     frame1 = cvtColor(frame1, COLOR_RGB2BGR)
     solutions.drawing_utils.draw_landmarks(frame1, results1.pose_landmarks,solutions.pose.POSE_CONNECTIONS)
     clip1.write(frame1)
-    clip1.write(frame1)
     
     # Mapping of Player 2
-    ret, frame2 = video.read()
-    if frame2 is None:
-        break
-    frame2 = frame2[crop2.yoffset:crop2.y+crop2.yoffset,crop2.xoffset:crop2.x+crop2.xoffset]
+    frame2 = frame[crop2.yoffset:crop2.y+crop2.yoffset,crop2.xoffset:crop2.x+crop2.xoffset]
     frame2 = cvtColor(frame2, COLOR_BGR2RGB)
     results2 = pose2.process(frame2)
     frame2 = cvtColor(frame2, COLOR_RGB2BGR)
     solutions.drawing_utils.draw_landmarks(frame2, results2.pose_landmarks,solutions.pose.POSE_CONNECTIONS)
-    clip2.write(frame2)
     clip2.write(frame2)
     
 video.release()
