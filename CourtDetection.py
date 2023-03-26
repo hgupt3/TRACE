@@ -84,6 +84,8 @@ while video.isOpened():
     cannyMain = Canny(eroded, 90, 100)
     
     # # Setting variables for extreme lines
+    extraLen = width/3
+    
     xOLeft = width
     xORight = 0
     xFLeft = width
@@ -99,8 +101,8 @@ while video.isOpened():
     yOBottom = 0
     yFTop = height
     yFBottom = 0
-    yOAxis = [[-500,0],[-500,height]]
-    yFAxis = [[width+500,0],[width+500,height]]
+    yOAxis = [[-extraLen,0],[-extraLen,height]]
+    yFAxis = [[width+extraLen,0],[width+extraLen,height]]
     yOTopLine = [[],[]]
     yOBottomLine = [[],[]]
     yFTopLine = [[],[]]
@@ -120,10 +122,10 @@ while video.isOpened():
             y2 = int(y0 - width*(a))
             
             # Furthest intersecting point at every axis calculations done here
-            intersectxF = findIntersection(xFAxis, [[x1,y1],[x2,y2]], -500, 0, width+500, height)
-            intersectyO = findIntersection(yOAxis, [[x1,y1],[x2,y2]], -500, 0, width+500, height)
-            intersectxO = findIntersection(xOAxis, [[x1,y1],[x2,y2]], -500, 0, width+500, height)
-            intersectyF = findIntersection(yFAxis, [[x1,y1],[x2,y2]], -500, 0, width+500, height)
+            intersectxF = findIntersection(xFAxis, [[x1,y1],[x2,y2]], -extraLen, 0, width+extraLen, height)
+            intersectyO = findIntersection(yOAxis, [[x1,y1],[x2,y2]], -extraLen, 0, width+extraLen, height)
+            intersectxO = findIntersection(xOAxis, [[x1,y1],[x2,y2]], -extraLen, 0, width+extraLen, height)
+            intersectyF = findIntersection(yFAxis, [[x1,y1],[x2,y2]], -extraLen, 0, width+extraLen, height)
             
             if (intersectxO is None) and (intersectxF is None) and (intersectyO is None) and (intersectyF is None):
                 continue
@@ -173,43 +175,10 @@ while video.isOpened():
     #     line(frame, (lineEndpoints[i][0][0],lineEndpoints[i][0][1]), (lineEndpoints[i][1][0],lineEndpoints[i][1][1]), (0, 0, 255), 2)
     
     # Find four corners of the court and display it
-    topLeftP = findIntersection(xOLeftLine, yOTopLine, -500, 0, width+500, height)
-    topRightP = findIntersection(xORightLine, yFTopLine, -500, 0, width+500, height)
-    bottomLeftP = findIntersection(xFLeftLine, yOBottomLine, -500, 0, width+500, height)
-    bottomRightP = findIntersection(xFRightLine, yFBottomLine, -500, 0, width+500, height)
-    
-    # If nothing is found, use the previous value 
-    if topLeftP is None:
-        topLeftP = KtopLeftP
-    else:
-        KtopLeftP = topLeftP
-        lst = list(KtopLeftP)
-        lst[0] += 1
-        KtopLeftP = tuple(lst)
-        
-    if topRightP is None:
-        topRightP = KtopRightP
-    else:
-        KtopRightP = topRightP
-        lst = list(KtopRightP)
-        lst[0] += 1
-        KtopRightP = tuple(lst)
-        
-    if bottomLeftP is None:
-        bottomLeftP = KbottomLeftP
-    else:
-        KbottomLeftP = bottomLeftP
-        lst = list(KbottomLeftP)
-        lst[0] += 1
-        KbottomLeftP = tuple(lst)
-        
-    if bottomRightP is None:
-        bottomRightP = KbottomRightP
-    else:
-        KbottomRightP = bottomRightP
-        lst = list(KbottomRightP)
-        lst[0] += 1
-        KbottomRightP = tuple(lst)
+    topLeftP = findIntersection(xOLeftLine, yOTopLine, -extraLen, 0, width+extraLen, height)
+    topRightP = findIntersection(xORightLine, yFTopLine, -extraLen, 0, width+extraLen, height)
+    bottomLeftP = findIntersection(xFLeftLine, yOBottomLine, -extraLen, 0, width+extraLen, height)
+    bottomRightP = findIntersection(xFRightLine, yFBottomLine, -extraLen, 0, width+extraLen, height)
         
     # If all corner points are different or something not found, rerun print
     if (not(topLeftP == NtopLeftP)) and (not(topRightP == NtopRightP)) and (not(bottomLeftP == NbottomLeftP)) and (not(bottomRightP == NbottomRightP)):
@@ -240,7 +209,7 @@ while video.isOpened():
         circle(frame, NbottomRightP, radius=0, color=(255, 0, 255), thickness=10)
             
     imshow("Frame", frame)
-    if waitKey(1) == ord("q"):
+    if waitKey(100000) == ord("q"):
         break
     
 video.release()
