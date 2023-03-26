@@ -1,5 +1,4 @@
 from numpy import pi, ones, zeros, uint8, where, cos, sin
-import matplotlib.pyplot as plt
 from cv2 import VideoCapture, cvtColor, Canny, line, imshow, waitKey, destroyAllWindows, COLOR_BGR2GRAY, HoughLinesP
 from cv2 import threshold, THRESH_BINARY, dilate, floodFill, circle, HoughLines, erode
 from TraceHeader import videoFile, checkPath, findIntersection
@@ -11,15 +10,11 @@ width = int(video.get(3))
 height = int(video.get(4))
 
 # Defining comparison points
-KtopLeftP = None
-KtopRightP = None
-KbottomLeftP = None
-KbottomRightP = None
 NtopLeftP = None
 NtopRightP = None
 NbottomLeftP = None
 NbottomRightP = None
-    
+
 while video.isOpened():
     ret, frame = video.read()
     if frame is None:
@@ -35,18 +30,12 @@ while video.isOpened():
     intersectNum = zeros((len(hPLines),2))
     i = 0
     for hPLine1 in hPLines:
-        Line1x1 = hPLine1[0][0]
-        Line1y1 = hPLine1[0][1]
-        Line1x2 = hPLine1[0][2]
-        Line1y2 = hPLine1[0][3]
+        Line1x1, Line1y1, Line1x2, Line1y2 = hPLine1[0]
         Line1 = [[Line1x1,Line1y1],[Line1x2,Line1y2]]
         for hPLine2 in hPLines:
-            Line2x1 = hPLine2[0][0]
-            Line2y1 = hPLine2[0][1]
-            Line2x2 = hPLine2[0][2]
-            Line2y2 = hPLine2[0][3]
+            Line2x1, Line2y1, Line2x2, Line2y2 = hPLine2[0]
             Line2 = [[Line2x1,Line2y1],[Line2x2,Line2y2]]
-            if (Line1x1 == Line2x1) and (Line1y1 == Line2y1)and (Line1x2 == Line2x2) and (Line1y2 == Line2y2):
+            if Line1 is Line2:
                 continue
             if Line1x1>Line1x2:
                 temp = Line1x1
@@ -59,9 +48,9 @@ while video.isOpened():
                 Line1y2 = temp
                 
             intersect = findIntersection(Line1, Line2, Line1x1-200, Line1y1-200, Line1x2+200, Line1y2+200)
-            intersectNum[i][1] = i
             if intersect is not None:
                 intersectNum[i][0] += 1
+        intersectNum[i][1] = i
         i += 1
 
     # Lines with most intersections get a fill mask command on them
@@ -70,13 +59,13 @@ while video.isOpened():
     nonRectArea = dilation.copy()
     intersectNum = intersectNum[(-intersectNum)[:, 0].argsort()]
     for hPLine in hPLines:
-        for x1,y1,x2,y2 in hPLine:
-            # line(frame, (x1,y1), (x2,y2), (255, 255, 0), 2)
-            for p in range(8):
-                if (i==intersectNum[p][1]) and (intersectNum[i][0]>0):
-                    # line(frame, (x1,y1), (x2,y2), (0, 0, 255), 2)
-                    floodFill(nonRectArea, zeros((height+2, width+2), uint8), (x1, y1), 1) 
-                    floodFill(nonRectArea, zeros((height+2, width+2), uint8), (x2, y2), 1) 
+        x1,y1,x2,y2 = hPLine[0]
+        # line(frame, (x1,y1), (x2,y2), (255, 255, 0), 2)
+        for p in range(8):
+            if (i==intersectNum[p][1]) and (intersectNum[i][0]>0):
+                # line(frame, (x1,y1), (x2,y2), (0, 0, 255), 2)
+                floodFill(nonRectArea, zeros((height+2, width+2), uint8), (x1, y1), 1) 
+                floodFill(nonRectArea, zeros((height+2, width+2), uint8), (x2, y2), 1) 
         i+=1
     dilation[where(nonRectArea == 255)] = 0
     dilation[where(nonRectArea == 1)] = 255
@@ -209,7 +198,7 @@ while video.isOpened():
         circle(frame, NbottomRightP, radius=0, color=(255, 0, 255), thickness=10)
             
     imshow("Frame", frame)
-    if waitKey(100000) == ord("q"):
+    if waitKey(1000000000) == ord("q"):
         break
     
 video.release()

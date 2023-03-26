@@ -1,4 +1,4 @@
-from os import path, remove
+from os import path
 from sys import exit
 
 # Video to be used placed in Clips folder
