@@ -198,7 +198,7 @@ while video.isOpened():
         circle(frame, NbottomRightP, radius=0, color=(255, 0, 255), thickness=10)
             
     imshow("Frame", frame)
-    if waitKey(1000000000) == ord("q"):
+    if waitKey(1) == ord("q"):
         break
     
 video.release()
