@@ -2,6 +2,7 @@ from numpy import pi, ones, zeros, uint8, where, cos, sin
 from cv2 import VideoCapture, cvtColor, Canny, line, imshow, waitKey, destroyAllWindows, COLOR_BGR2GRAY, HoughLinesP
 from cv2 import threshold, THRESH_BINARY, dilate, floodFill, circle, HoughLines, erode
 from TraceHeader import videoFile, checkPath, findIntersection
+from CourtMapping import CourtMap
 
 # Retrieve video from video file
 video = VideoCapture(videoFile)
@@ -196,8 +197,10 @@ while video.isOpened():
         circle(frame, NtopRightP, radius=0, color=(255, 0, 255), thickness=10)
         circle(frame, NbottomLeftP, radius=0, color=(255, 0, 255), thickness=10)
         circle(frame, NbottomRightP, radius=0, color=(255, 0, 255), thickness=10)
-            
-    imshow("Frame", frame)
+
+
+    dst = CourtMap(NbottomLeftP, NtopLeftP, NtopRightP, NbottomRightP, frame)
+    imshow("Frame", dst)
     if waitKey(1) == ord("q"):
         break
     
