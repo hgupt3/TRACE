@@ -1,8 +1,6 @@
 from os import path, remove
-from sys import exit
-from dataclasses import dataclass
 from mediapipe import solutions
-from cv2 import VideoCapture,VideoWriter,VideoWriter_fourcc,cvtColor, COLOR_BGR2RGB, COLOR_RGB2BGR
+from cv2 import VideoCapture,VideoWriter,VideoWriter_fourcc,cvtColor, COLOR_BGR2RGB, COLOR_RGB2BGR, circle
 from moviepy.editor import VideoFileClip, CompositeVideoClip
 from TraceHeader import checkBounds, checkPath, calculatePixels, videoFile
 
@@ -45,8 +43,10 @@ clip1 = VideoWriter('./Videos/Results/Video1.mp4',fourcc,25.0,(crop1.x,crop1.y))
 clip2 = VideoWriter('./Videos/Results/Video2.mp4',fourcc,25.0,(crop2.x,crop2.y))
 
 # Player pose decleration 
-pose1 = solutions.pose.Pose(model_complexity=2, min_detection_confidence=0.25, min_tracking_confidence=0.25)
-pose2 = solutions.pose.Pose(model_complexity=2, min_detection_confidence=0.25, min_tracking_confidence=0.25) 
+mp_pose = solutions.pose
+mp_drawing = solutions.drawing_utils
+pose1 = mp_pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25)
+pose2 = mp_pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25) 
 
 while video.isOpened():
     ret, frame = video.read()
@@ -58,7 +58,17 @@ while video.isOpened():
     frame1 = cvtColor(frame1, COLOR_BGR2RGB)
     results1 = pose1.process(frame1)
     frame1 = cvtColor(frame1, COLOR_RGB2BGR)
-    solutions.drawing_utils.draw_landmarks(frame1, results1.pose_landmarks,solutions.pose.POSE_CONNECTIONS)
+    # mp_drawing.draw_landmarks(frame1, results1.pose_landmarks,solutions.pose.POSE_CONNECTIONS)
+    
+    l1_heel_x = int(results1.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_HEEL].x * crop1.x)
+    l1_heel_y = int(results1.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_HEEL].y * crop1.y)
+    
+    r1_heel_x = int(results1.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HEEL].x * crop1.x)
+    r1_heel_y = int(results1.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HEEL].y * crop1.y)
+    
+    circle(frame1, (l1_heel_x, l1_heel_y), 7, (0,0,255), -1)
+    circle(frame1, (r1_heel_x, r1_heel_y), 7, (0,0,255), -1)
+    
     clip1.write(frame1)
     
     # Mapping of Player 2
@@ -66,8 +76,20 @@ while video.isOpened():
     frame2 = cvtColor(frame2, COLOR_BGR2RGB)
     results2 = pose2.process(frame2)
     frame2 = cvtColor(frame2, COLOR_RGB2BGR)
-    solutions.drawing_utils.draw_landmarks(frame2, results2.pose_landmarks,solutions.pose.POSE_CONNECTIONS)
+    # mp_drawing.draw_landmarks(frame2, results2.pose_landmarks,solutions.pose.POSE_CONNECTIONS)
+    
+    l2_heel_x = int(results2.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_HEEL].x * crop2.x)
+    l2_heel_y = int(results2.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_HEEL].y * crop2.y)
+    
+    r2_heel_x = int(results2.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HEEL].x * crop2.x)
+    r2_heel_y = int(results2.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HEEL].y * crop2.y)
+    
+    circle(frame2, (l2_heel_x, l2_heel_y), 6, (0,0,255), -1)
+    circle(frame2, (r2_heel_x, r2_heel_y), 6, (0,0,255), -1)
+    
     clip2.write(frame2)
+    
+    
     
 video.release()
 clip1.release()

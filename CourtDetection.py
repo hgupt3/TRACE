@@ -99,7 +99,7 @@ while video.isOpened():
     yFBottomLine = [[],[]]
     
     # Finding all lines then allocate them to specified extreme variables
-    hLines = HoughLines(cannyMain, 2, pi/180, 250)
+    hLines = HoughLines(cannyMain, 2, pi/180, 300)
     for hLine in hLines:
         for rho,theta in hLine:
             a = cos(theta)
@@ -201,7 +201,7 @@ while video.isOpened():
 
     dst = CourtMap(NbottomLeftP, NtopLeftP, NtopRightP, NbottomRightP, frame)
     imshow("Frame", dst)
-    if waitKey(1) == ord("q"):
+    if waitKey(10000000) == ord("q"):
         break
     
 video.release()
