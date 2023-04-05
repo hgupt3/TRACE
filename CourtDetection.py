@@ -18,6 +18,9 @@ NtopRightP = None
 NbottomLeftP = None
 NbottomRightP = None
 
+# List of all coordinates in order of frame exported from mediapipe function
+# The only way to do this real-time is to do body tracking in this file
+# This is because the BodyTracking function requires the whole video to process accurately
 feetPoints = bodyMap(bodyVideo)
 frameCount = 0
 
@@ -203,6 +206,7 @@ while video.isOpened():
         circle(frame, NbottomLeftP, radius=0, color=(255, 0, 255), thickness=10)
         circle(frame, NbottomRightP, radius=0, color=(255, 0, 255), thickness=10)
 
+    # Displaying feet points from bodyMap function
     circle(frame, feetPoints[frameCount][0], radius=0, color=(0, 0, 255), thickness=10)
     circle(frame, feetPoints[frameCount][1], radius=0, color=(0, 0, 255), thickness=10)
     circle(frame, feetPoints[frameCount][2], radius=0, color=(0, 0, 255), thickness=30)
