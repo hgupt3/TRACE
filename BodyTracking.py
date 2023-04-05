@@ -1,120 +1,74 @@
-from os import path, remove
 from mediapipe import solutions
-from cv2 import VideoCapture,VideoWriter,VideoWriter_fourcc,cvtColor, COLOR_BGR2RGB, COLOR_RGB2BGR, circle
-from moviepy.editor import VideoFileClip, CompositeVideoClip
-from TraceHeader import checkBounds, checkPath, calculatePixels, videoFile
+from cv2 import VideoCapture,VideoWriter,imshow,cvtColor, COLOR_BGR2RGB, COLOR_RGB2BGR, circle, waitKey
+from TraceHeader import calculatePixels, videoFile
 
-# Ratios of the crop width, height, and offsets
-# If centered is 1, program ignores offset and centers frame
-class crop1:
-    x: float = 50/100
-    xoffset: float = 0/100
-    xcenter: int = 1 
+def bodyMap(video):
+    width = video.get(3)
+    height = video.get(4)
+    feetPoints = []
     
-    y: float = 33/100
-    yoffset: float = 0/100
-    ycenter: int = 0
+    # Ratios of the crop width, height, and offsets
+    # If centered is 1, program ignores offset and centers frame
+    class crop1:
+        x: float = 50/100
+        xoffset: float = 0/100
+        xcenter: int = 1 
+        
+        y: float = 33/100
+        yoffset: float = 0/100
+        ycenter: int = 0
     
-class crop2:
-    x: float = 83/100
-    xoffset: float = 0/100
-    xcenter: int = 1 
+    class crop2:
+        x: float = 83/100
+        xoffset: float = 0/100
+        xcenter: int = 1 
+        
+        y: float = 60/100
+        yoffset: float = 40/100
+        ycenter: int = 0
     
-    y: float = 60/100
-    yoffset: float = 40/100
-    ycenter: int = 0
-
-# Error checking for all inputs
-checkBounds(crop1, crop2)
-checkPath(videoFile)
-
-# Taking video and finding pixel width and height
-video = VideoCapture(videoFile)
-width = video.get(3)
-height = video.get(4)
-
-# Calculations for pixels used in both crops
-crop1 = calculatePixels(crop1, width, height)
-crop2 = calculatePixels(crop2, width, height)
-
-# Defining where to write cropped videos and in what format
-fourcc = VideoWriter_fourcc(*'mp4v')
-clip1 = VideoWriter('./Videos/Results/Video1.mp4',fourcc,25.0,(crop1.x,crop1.y))
-clip2 = VideoWriter('./Videos/Results/Video2.mp4',fourcc,25.0,(crop2.x,crop2.y))
-
-# Player pose decleration 
-mp_pose = solutions.pose
-mp_drawing = solutions.drawing_utils
-pose1 = mp_pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25)
-pose2 = mp_pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25) 
-
-while video.isOpened():
-    ret, frame = video.read()
-    if frame is None:
-        break
+    # Calculations for pixels used in both crops
+    crop1 = calculatePixels(crop1, width, height)
+    crop2 = calculatePixels(crop2, width, height)
     
-    # Mapping of Player 1
-    frame1 = frame[crop1.yoffset:crop1.y+crop1.yoffset,crop1.xoffset:crop1.x+crop1.xoffset]
-    frame1 = cvtColor(frame1, COLOR_BGR2RGB)
-    results1 = pose1.process(frame1)
-    frame1 = cvtColor(frame1, COLOR_RGB2BGR)
-    # mp_drawing.draw_landmarks(frame1, results1.pose_landmarks,solutions.pose.POSE_CONNECTIONS)
+    # Player pose decleration 
+    mp_pose = solutions.pose
+    pose1 = mp_pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25)
+    pose2 = mp_pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25) 
     
-    l1_heel_x = int(results1.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_HEEL].x * crop1.x)
-    l1_heel_y = int(results1.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_HEEL].y * crop1.y)
-    
-    r1_heel_x = int(results1.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HEEL].x * crop1.x)
-    r1_heel_y = int(results1.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HEEL].y * crop1.y)
-    
-    circle(frame1, (l1_heel_x, l1_heel_y), 7, (0,0,255), -1)
-    circle(frame1, (r1_heel_x, r1_heel_y), 7, (0,0,255), -1)
-    
-    clip1.write(frame1)
-    
-    # Mapping of Player 2
-    frame2 = frame[crop2.yoffset:crop2.y+crop2.yoffset,crop2.xoffset:crop2.x+crop2.xoffset]
-    frame2 = cvtColor(frame2, COLOR_BGR2RGB)
-    results2 = pose2.process(frame2)
-    frame2 = cvtColor(frame2, COLOR_RGB2BGR)
-    # mp_drawing.draw_landmarks(frame2, results2.pose_landmarks,solutions.pose.POSE_CONNECTIONS)
-    
-    l2_heel_x = int(results2.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_HEEL].x * crop2.x)
-    l2_heel_y = int(results2.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_HEEL].y * crop2.y)
-    
-    r2_heel_x = int(results2.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HEEL].x * crop2.x)
-    r2_heel_y = int(results2.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HEEL].y * crop2.y)
-    
-    circle(frame2, (l2_heel_x, l2_heel_y), 6, (0,0,255), -1)
-    circle(frame2, (r2_heel_x, r2_heel_y), 6, (0,0,255), -1)
-    
-    clip2.write(frame2)
-    
-    
-    
-video.release()
-clip1.release()
-clip2.release()
-
-# Combining the seperate clips to make a single video file
-clipMain = VideoFileClip(videoFile)
-clip1 = VideoFileClip("./Videos/Results/Video1.mp4").set_position((crop1.xoffset,crop1.yoffset))
-clip2 = VideoFileClip("./Videos/Results/Video2.mp4").set_position((crop2.xoffset,crop2.yoffset))
-result = CompositeVideoClip([clipMain, clip1, clip2])
-
-# Allows multiple result files
-if path.exists("./Videos/Results/Result.mp4"):
-    i = 1
-    while True:
-        if not path.exists("./Videos/Results/Result"+str(i)+".mp4"):
-            written = 1
-            result.write_videofile("./Videos/Results/Result"+str(i)+".mp4", verbose=False, logger=None)
-            print("File successfully created at /Videos/Results/Result"+str(i)+".mp4")
+    while video.isOpened():
+        ret, frame = video.read()
+        if frame is None:
             break
-        i += 1
-else:
-    result.write_videofile("./Videos/Results/Result.mp4", verbose=False, logger=None)
-    print("File successfully created at /Videos/Results/Result.mp4")
+            
+        # Mapping of Player 1
+        frame1 = frame[crop1.yoffset:crop1.y+crop1.yoffset,crop1.xoffset:crop1.x+crop1.xoffset]
+        frame1 = cvtColor(frame1, COLOR_BGR2RGB)
+        results1 = pose1.process(frame1)
+        frame1 = cvtColor(frame1, COLOR_RGB2BGR)
+        # mp_drawing.draw_landmarks(frame1, results1.pose_landmarks,solutions.pose.POSE_CONNECTIONS)
+        
+        l1_foot_x = int(results1.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_FOOT_INDEX].x * crop1.x) + crop1.xoffset
+        l1_foot_y = int(results1.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_FOOT_INDEX].y * crop1.y) + crop1.yoffset
 
-# Removing temporary files
-remove("./Videos/Results/Video1.mp4")
-remove("./Videos/Results/Video2.mp4")
+        r1_foot_x = int(results1.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_FOOT_INDEX].x * crop1.x) + crop1.xoffset
+        r1_foot_y = int(results1.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_FOOT_INDEX].y * crop1.y) + crop1.yoffset
+
+        # Mapping of Player 2
+        frame2 = frame[crop2.yoffset:crop2.y+crop2.yoffset,crop2.xoffset:crop2.x+crop2.xoffset]
+        frame2 = cvtColor(frame2, COLOR_BGR2RGB)
+        results2 = pose2.process(frame2)
+        frame2 = cvtColor(frame2, COLOR_RGB2BGR)
+        # mp_drawing.draw_landmarks(frame2, results2.pose_landmarks,solutions.pose.POSE_CONNECTIONS)
+
+        l2_foot_x = int(results2.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_FOOT_INDEX].x * crop2.x) + crop2.xoffset
+        l2_foot_y = int(results2.pose_landmarks.landmark[mp_pose.PoseLandmark.LEFT_FOOT_INDEX].y * crop2.y) + crop2.yoffset
+
+        r2_foot_x = int(results2.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_FOOT_INDEX].x * crop2.x) + crop2.xoffset
+        r2_foot_y = int(results2.pose_landmarks.landmark[mp_pose.PoseLandmark.RIGHT_FOOT_INDEX].y * crop2.y) + crop2.yoffset
+
+        feetPoints.append([[l1_foot_x,l1_foot_y],[r1_foot_x,r1_foot_y],[l2_foot_x,l2_foot_y],[r2_foot_x,r2_foot_y]])
+    
+    video.release()
+    return feetPoints
+        

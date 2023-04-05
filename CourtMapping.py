@@ -14,7 +14,7 @@ courtWidth = courtHeight * ratio
 yOffset = ((height - courtHeight) / 2)+130
 xOffset = (width - courtWidth) / 2
 
-def CourtMap(bottom_left, top_left, top_right, bottom_right, img):
+def courtMap(bottom_left, top_left, top_right, bottom_right, img):
     pts1 = float32([[top_left, top_right, bottom_left, bottom_right]])
     pts2 = float32([[0+xOffset,0+yOffset],[courtWidth+xOffset,0+yOffset],[0+xOffset,courtHeight+yOffset],[courtWidth+xOffset,courtHeight+yOffset]])
     M = getPerspectiveTransform(pts1,pts2)

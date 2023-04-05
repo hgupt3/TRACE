@@ -2,10 +2,12 @@ from numpy import pi, ones, zeros, uint8, where, cos, sin
 from cv2 import VideoCapture, cvtColor, Canny, line, imshow, waitKey, destroyAllWindows, COLOR_BGR2GRAY, HoughLinesP
 from cv2 import threshold, THRESH_BINARY, dilate, floodFill, circle, HoughLines, erode
 from TraceHeader import videoFile, checkPath, findIntersection
-from CourtMapping import CourtMap
+from CourtMapping import courtMap
+from BodyTracking import bodyMap
 
 # Retrieve video from video file
 video = VideoCapture(videoFile)
+bodyVideo = VideoCapture(videoFile)
 checkPath(videoFile)
 width = int(video.get(3))
 height = int(video.get(4))
@@ -15,6 +17,9 @@ NtopLeftP = None
 NtopRightP = None
 NbottomLeftP = None
 NbottomRightP = None
+
+feetPoints = bodyMap(bodyVideo)
+frameCount = 0
 
 while video.isOpened():
     ret, frame = video.read()
@@ -198,9 +203,15 @@ while video.isOpened():
         circle(frame, NbottomLeftP, radius=0, color=(255, 0, 255), thickness=10)
         circle(frame, NbottomRightP, radius=0, color=(255, 0, 255), thickness=10)
 
-
-    dst = CourtMap(NbottomLeftP, NtopLeftP, NtopRightP, NbottomRightP, frame)
-    imshow("Frame", dst)
+    circle(frame, feetPoints[frameCount][0], radius=0, color=(0, 0, 255), thickness=10)
+    circle(frame, feetPoints[frameCount][1], radius=0, color=(0, 0, 255), thickness=10)
+    circle(frame, feetPoints[frameCount][2], radius=0, color=(0, 0, 255), thickness=30)
+    circle(frame, feetPoints[frameCount][3], radius=0, color=(0, 0, 255), thickness=30)
+    
+    processedFrame = courtMap(NbottomLeftP, NtopLeftP, NtopRightP, NbottomRightP, frame)
+    
+    frameCount = frameCount + 1
+    imshow("Frame", processedFrame)
     if waitKey(10000000) == ord("q"):
         break
     
