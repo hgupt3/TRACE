@@ -1,9 +1,10 @@
 from numpy import pi, ones, zeros, uint8, where, cos, sin
 from cv2 import VideoCapture, cvtColor, Canny, line, imshow, waitKey, destroyAllWindows, COLOR_BGR2GRAY, HoughLinesP
 from cv2 import threshold, THRESH_BINARY, dilate, floodFill, circle, HoughLines, erode
-from TraceHeader import videoFile, checkPath, findIntersection
-from CourtMapping import courtMap
+from TraceHeader import videoFile, checkPath, findIntersection, calculatePixels
+from CourtMapping import courtMap, showLines, showPoint
 from BodyTracking import bodyMap
+from mediapipe import solutions
 
 # Retrieve video from video file
 video = VideoCapture(videoFile)
@@ -18,11 +19,42 @@ NtopRightP = None
 NbottomLeftP = None
 NbottomRightP = None
 
-# List of all coordinates in order of frame exported from mediapipe function
-# The only way to do this real-time is to do body tracking in this file
-# This is because the BodyTracking function requires the whole video to process accurately
-feetPoints = bodyMap(bodyVideo)
-frameCount = 0
+# Ratios of the crop width, height, and offsets
+# If centered is 1, program ignores offset and centers frame
+class crop1:
+    x: float = 50/100
+    xoffset: float = 0/100
+    xcenter: int = 1 
+    
+    y: float = 33/100
+    yoffset: float = 0/100
+    ycenter: int = 0
+
+class crop2:
+    x: float = 83/100
+    xoffset: float = 0/100
+    xcenter: int = 1 
+    
+    y: float = 60/100
+    yoffset: float = 40/100
+    ycenter: int = 0
+
+# Calculations for pixels used in both crops
+crop1 = calculatePixels(crop1, width, height)
+crop2 = calculatePixels(crop2, width, height)
+
+# Player pose decleration 
+mp_pose = solutions.pose
+pose1 = mp_pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25)
+pose2 = mp_pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25) 
+
+# Body smoothing variables. n is number of frames averaged
+n = 3
+counter = 0
+avg1 = 0.
+avg2 = 0.
+avg3 = 0.
+avg4 = 0.
 
 while video.isOpened():
     ret, frame = video.read()
@@ -172,51 +204,97 @@ while video.isOpened():
     # for i in range(len(lineEndpoints)):
     #     line(frame, (lineEndpoints[i][0][0],lineEndpoints[i][0][1]), (lineEndpoints[i][1][0],lineEndpoints[i][1][1]), (0, 0, 255), 2)
     
+    # Top line has margin of error that effects all courtmapping outputs 
+    yOTopLine[0][1] = yOTopLine[0][1]+4
+    yOTopLine[1][1] = yOTopLine[1][1]+4
+    
+    yFTopLine[0][1] = yFTopLine[0][1]+4
+    yFTopLine[1][1] = yFTopLine[1][1]+4
+    
     # Find four corners of the court and display it
     topLeftP = findIntersection(xOLeftLine, yOTopLine, -extraLen, 0, width+extraLen, height)
     topRightP = findIntersection(xORightLine, yFTopLine, -extraLen, 0, width+extraLen, height)
     bottomLeftP = findIntersection(xFLeftLine, yOBottomLine, -extraLen, 0, width+extraLen, height)
     bottomRightP = findIntersection(xFRightLine, yFBottomLine, -extraLen, 0, width+extraLen, height)
-        
+    
     # If all corner points are different or something not found, rerun print
     if (not(topLeftP == NtopLeftP)) and (not(topRightP == NtopRightP)) and (not(bottomLeftP == NbottomLeftP)) and (not(bottomRightP == NbottomRightP)):
-        line(frame, topLeftP, topRightP, (0, 0, 255), 2)
-        line(frame, bottomLeftP, bottomRightP, (0, 0, 255), 2)
-        line(frame, topLeftP, bottomLeftP, (0, 0, 255), 2)
-        line(frame, topRightP, bottomRightP, (0, 0, 255), 2)
+        # line(frame, topLeftP, topRightP, (0, 0, 255), 2)
+        # line(frame, bottomLeftP, bottomRightP, (0, 0, 255), 2)
+        # line(frame, topLeftP, bottomLeftP, (0, 0, 255), 2)
+        # line(frame, topRightP, bottomRightP, (0, 0, 255), 2)
         
-        circle(frame, topLeftP, radius=0, color=(255, 0, 255), thickness=10)
-        circle(frame, topRightP, radius=0, color=(255, 0, 255), thickness=10)
-        circle(frame, bottomLeftP, radius=0, color=(255, 0, 255), thickness=10)
-        circle(frame, bottomRightP, radius=0, color=(255, 0, 255), thickness=10)
+        # circle(frame, topLeftP, radius=0, color=(255, 0, 255), thickness=10)
+        # circle(frame, topRightP, radius=0, color=(255, 0, 255), thickness=10)
+        # circle(frame, bottomLeftP, radius=0, color=(255, 0, 255), thickness=10)
+        # circle(frame, bottomRightP, radius=0, color=(255, 0, 255), thickness=10)
         
         NtopLeftP = topLeftP
         NtopRightP = topRightP
         NbottomLeftP = bottomLeftP
         NbottomRightP = bottomRightP
         
-    else:
-        line(frame, NtopLeftP, NtopRightP, (0, 0, 255), 2)
-        line(frame, NbottomLeftP, NbottomRightP, (0, 0, 255), 2)
-        line(frame, NtopLeftP, NbottomLeftP, (0, 0, 255), 2)
-        line(frame, NtopRightP, NbottomRightP, (0, 0, 255), 2)
+    # else:
+        # line(frame, NtopLeftP, NtopRightP, (0, 0, 255), 2)
+        # line(frame, NbottomLeftP, NbottomRightP, (0, 0, 255), 2)
+        # line(frame, NtopLeftP, NbottomLeftP, (0, 0, 255), 2)
+        # line(frame, NtopRightP, NbottomRightP, (0, 0, 255), 2)
         
-        circle(frame, NtopLeftP, radius=0, color=(255, 0, 255), thickness=10)
-        circle(frame, NtopRightP, radius=0, color=(255, 0, 255), thickness=10)
-        circle(frame, NbottomLeftP, radius=0, color=(255, 0, 255), thickness=10)
-        circle(frame, NbottomRightP, radius=0, color=(255, 0, 255), thickness=10)
+        # circle(frame, NtopLeftP, radius=0, color=(255, 0, 255), thickness=10)
+        # circle(frame, NtopRightP, radius=0, color=(255, 0, 255), thickness=10)
+        # circle(frame, NbottomLeftP, radius=0, color=(255, 0, 255), thickness=10)
+        # circle(frame, NbottomRightP, radius=0, color=(255, 0, 255), thickness=10)
 
     # Displaying feet points from bodyMap function
-    circle(frame, feetPoints[frameCount][0], radius=0, color=(0, 0, 255), thickness=10)
-    circle(frame, feetPoints[frameCount][1], radius=0, color=(0, 0, 255), thickness=10)
-    circle(frame, feetPoints[frameCount][2], radius=0, color=(0, 0, 255), thickness=30)
-    circle(frame, feetPoints[frameCount][3], radius=0, color=(0, 0, 255), thickness=30)
+    feetPoints = bodyMap(frame, pose1, crop1, pose2, crop2)
+    # circle(frame, feetPoints[0], radius=0, color=(0, 0, 255), thickness=10)
+    # circle(frame, feetPoints[1], radius=0, color=(0, 0, 255), thickness=10)
+    # circle(frame, feetPoints[2], radius=0, color=(0, 0, 255), thickness=30)
+    # circle(frame, feetPoints[3], radius=0, color=(0, 0, 255), thickness=30)
     
-    processedFrame = courtMap(NbottomLeftP, NtopLeftP, NtopRightP, NbottomRightP, frame)
+    # Prioritizing lower foot y in body average y position
+    if feetPoints[0][1] > feetPoints[1][1]:
+        lowerFoot1 = feetPoints[0][1]
+        higherFoot1 = feetPoints[1][1]
+    else:
+        lowerFoot1 = feetPoints[1][1]
+        higherFoot1 = feetPoints[0][1]
+        
+    if feetPoints[2][1] > feetPoints[3][1]:
+        lowerFoot2 = feetPoints[2][1]
+        higherFoot2 = feetPoints[3][1]
+    else:
+        lowerFoot2 = feetPoints[3][1]
+        higherFoot2 = feetPoints[2][1]
     
-    frameCount = frameCount + 1
+    # Allocated 75% preference to lower foot y positions
+    body1 = [(feetPoints[0][0]+feetPoints[1][0])/2,(lowerFoot1*0.75+higherFoot1*0.25)]
+    body2 = [(feetPoints[2][0]+feetPoints[3][0])/2,(lowerFoot2*0.75+higherFoot2*0.25)]
+    
+    # Body coordinate smoothing
+    counter += 1
+    coeff = 1. / min(counter, n)
+    
+    avg1 = coeff * body1[0] + (1. - coeff) * avg1
+    avg2 = coeff * body1[1] + (1. - coeff) * avg2
+    avg3 = coeff * body2[0] + (1. - coeff) * avg3
+    avg4 = coeff * body2[1] + (1. - coeff) * avg4
+    body1[0] = avg1
+    body1[1] = avg2
+    body2[0] = avg3
+    body2[1] = avg4
+    
+    processedFrame, M = courtMap(frame, NtopLeftP, NtopRightP, NbottomLeftP, NbottomRightP)
+    processedFrame = showLines(processedFrame)
+    # processedFrame = showPoint(processedFrame, M, feetPoints[0])
+    # processedFrame = showPoint(processedFrame, M, feetPoints[1])
+    # processedFrame = showPoint(processedFrame, M, feetPoints[2])
+    # processedFrame = showPoint(processedFrame, M, feetPoints[3])
+    processedFrame = showPoint(processedFrame, M, body1)
+    processedFrame = showPoint(processedFrame, M, body2)
+    
     imshow("Frame", processedFrame)
-    if waitKey(10000000) == ord("q"):
+    if waitKey(100000) == ord("q"):
         break
     
 video.release()
