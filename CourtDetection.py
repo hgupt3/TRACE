@@ -268,8 +268,8 @@ while video.isOpened():
         higherFoot2 = feetPoints[2][1]
     
     # Allocated 75% preference to lower foot y positions
-    body1 = [(feetPoints[0][0]+feetPoints[1][0])/2,(lowerFoot1*0.75+higherFoot1*0.25)]
-    body2 = [(feetPoints[2][0]+feetPoints[3][0])/2,(lowerFoot2*0.75+higherFoot2*0.25)]
+    body1 = [(feetPoints[0][0]+feetPoints[1][0])/2,(lowerFoot1*0.8+higherFoot1*0.2)]
+    body2 = [(feetPoints[2][0]+feetPoints[3][0])/2,(lowerFoot2*0.8+higherFoot2*0.2)]
     
     # Body coordinate smoothing
     counter += 1
