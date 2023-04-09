@@ -1,7 +1,7 @@
 from numpy import pi, ones, zeros, uint8, where, cos, sin
 from cv2 import VideoCapture, cvtColor, Canny, line, imshow, waitKey, destroyAllWindows, COLOR_BGR2GRAY, HoughLinesP
-from cv2 import threshold, THRESH_BINARY, dilate, floodFill, circle, HoughLines, erode
-from TraceHeader import videoFile, checkPath, findIntersection, calculatePixels
+from cv2 import threshold, THRESH_BINARY, dilate, floodFill, circle, HoughLines, erode, rectangle
+from TraceHeader import videoFile, findIntersection, calculatePixels
 from CourtMapping import courtMap, showLines, showPoint
 from BodyTracking import bodyMap
 from mediapipe import solutions
@@ -283,13 +283,14 @@ while video.isOpened():
     
     # Distorting frame and outputting results
     processedFrame, M = courtMap(frame, NtopLeftP, NtopRightP, NbottomLeftP, NbottomRightP)
+    # rectangle(processedFrame, (0,0),(967,1585),(0,0,0),2000)
     processedFrame = showLines(processedFrame)
 
     processedFrame = showPoint(processedFrame, M, [body1.xAvg,body1.yAvg])
     processedFrame = showPoint(processedFrame, M, [body2.xAvg,body2.yAvg])
     
     imshow("Frame", processedFrame)
-    if waitKey(100000) == ord("q"):
+    if waitKey(1) == ord("q"):
         break
     
 video.release()

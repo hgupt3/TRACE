@@ -1,6 +1,6 @@
 # from numpy import float32, maximum, minimum, amax
 from numpy import float32, zeros,  uint8, shape, array, squeeze
-from cv2 import VideoCapture, getPerspectiveTransform, warpPerspective, line, circle, warpAffine,perspectiveTransform
+from cv2 import VideoCapture, getPerspectiveTransform, warpPerspective, line, circle, rectangle, perspectiveTransform
 from TraceHeader import videoFile, checkPath
 
 video = VideoCapture(videoFile)
@@ -30,6 +30,7 @@ def courtMap(frame, top_left, top_right, bottom_left, bottom_right):
     return dst, M
 
 def showLines(frame):
+    rectangle(frame, (0,0),(967,1585),(255,0,0),6)
     line(frame, courtTL, courtTR, (0, 0, 255), 2)
     line(frame, courtBL, courtBR, (0, 0, 255), 2)
     line(frame, courtTL, courtBL, (0, 0, 255), 2)
