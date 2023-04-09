@@ -8,16 +8,8 @@ from mediapipe import solutions
 
 # Retrieve video from video file
 video = VideoCapture(videoFile)
-bodyVideo = VideoCapture(videoFile)
-checkPath(videoFile)
 width = int(video.get(3))
 height = int(video.get(4))
-
-# Defining comparison points
-NtopLeftP = None
-NtopRightP = None
-NbottomLeftP = None
-NbottomRightP = None
 
 # Ratios of the crop width, height, and offsets
 # If centered is 1, program ignores offset and centers frame
@@ -29,7 +21,7 @@ class crop1:
     y: float = 33/100
     yoffset: float = 0/100
     ycenter: int = 0
-
+    
 class crop2:
     x: float = 83/100
     xoffset: float = 0/100
@@ -43,18 +35,40 @@ class crop2:
 crop1 = calculatePixels(crop1, width, height)
 crop2 = calculatePixels(crop2, width, height)
 
-# Player pose decleration 
-mp_pose = solutions.pose
-pose1 = mp_pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25)
-pose2 = mp_pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25) 
-
-# Body smoothing variables. n is number of frames averaged
+# Body smoothing, n is number of frames averaged
 n = 3
 counter = 0
-avg1 = 0.
-avg2 = 0.
-avg3 = 0.
-avg4 = 0.
+
+# Player pose decleration 
+mp_pose = solutions.pose
+
+class body1:
+    pose = mp_pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25)
+    x: int
+    xAvg: float = 0
+    y: int
+    yAvg: float = 0 
+    
+class body2:
+    pose = mp_pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25) 
+    x: int
+    xAvg: float = 0
+    y: int
+    yAvg: float = 0
+
+# Setting reference frame lines
+extraLen = width/3
+class axis:
+    top = [[-extraLen,0],[width+extraLen,0]]
+    right = [[width+extraLen,0],[width+extraLen,height]]
+    bottom = [[-extraLen,height],[width+extraLen,height]]
+    left = [[-extraLen,0],[-extraLen,height]]
+
+# Setting comparison points
+NtopLeftP = None
+NtopRightP = None
+NbottomLeftP = None
+NbottomRightP = None
 
 while video.isOpened():
     ret, frame = video.read()
@@ -113,30 +127,16 @@ while video.isOpened():
     eroded = erode(dilation, ones((5, 5), uint8)) 
     cannyMain = Canny(eroded, 90, 100)
     
-    # # Setting variables for extreme lines
-    extraLen = width/3
+    # Extreme lines found every frame
+    xOLeft = width + extraLen
+    xORight = 0 - extraLen
+    xFLeft = width + extraLen
+    xFRight = 0 - extraLen
     
-    xOLeft = width
-    xORight = 0
-    xFLeft = width
-    xFRight = 0
-    xOAxis = [[0,0],[width,0]]
-    xFAxis = [[0,height],[width,height]]
-    xOLeftLine = [[],[]]
-    xORightLine = [[],[]]
-    xFLeftLine = [[],[]]
-    xFRightLine = [[],[]]
-
     yOTop = height
     yOBottom = 0
     yFTop = height
     yFBottom = 0
-    yOAxis = [[-extraLen,0],[-extraLen,height]]
-    yFAxis = [[width+extraLen,0],[width+extraLen,height]]
-    yOTopLine = [[],[]]
-    yOBottomLine = [[],[]]
-    yFTopLine = [[],[]]
-    yFBottomLine = [[],[]]
     
     # Finding all lines then allocate them to specified extreme variables
     hLines = HoughLines(cannyMain, 2, pi/180, 300)
@@ -152,10 +152,10 @@ while video.isOpened():
             y2 = int(y0 - width*(a))
             
             # Furthest intersecting point at every axis calculations done here
-            intersectxF = findIntersection(xFAxis, [[x1,y1],[x2,y2]], -extraLen, 0, width+extraLen, height)
-            intersectyO = findIntersection(yOAxis, [[x1,y1],[x2,y2]], -extraLen, 0, width+extraLen, height)
-            intersectxO = findIntersection(xOAxis, [[x1,y1],[x2,y2]], -extraLen, 0, width+extraLen, height)
-            intersectyF = findIntersection(yFAxis, [[x1,y1],[x2,y2]], -extraLen, 0, width+extraLen, height)
+            intersectxF = findIntersection(axis.bottom, [[x1,y1],[x2,y2]], -extraLen, 0, width+extraLen, height)
+            intersectyO = findIntersection(axis.left, [[x1,y1],[x2,y2]], -extraLen, 0, width+extraLen, height)
+            intersectxO = findIntersection(axis.top, [[x1,y1],[x2,y2]], -extraLen, 0, width+extraLen, height)
+            intersectyF = findIntersection(axis.right, [[x1,y1],[x2,y2]], -extraLen, 0, width+extraLen, height)
             
             if (intersectxO is None) and (intersectxF is None) and (intersectyO is None) and (intersectyF is None):
                 continue
@@ -204,7 +204,7 @@ while video.isOpened():
     # for i in range(len(lineEndpoints)):
     #     line(frame, (lineEndpoints[i][0][0],lineEndpoints[i][0][1]), (lineEndpoints[i][1][0],lineEndpoints[i][1][1]), (0, 0, 255), 2)
     
-    # Top line has margin of error that effects all courtmapping outputs 
+    # Top line has margin of error that effects all courtmapped outputs 
     yOTopLine[0][1] = yOTopLine[0][1]+4
     yOTopLine[1][1] = yOTopLine[1][1]+4
     
@@ -246,7 +246,7 @@ while video.isOpened():
         # circle(frame, NbottomRightP, radius=0, color=(255, 0, 255), thickness=10)
 
     # Displaying feet points from bodyMap function
-    feetPoints = bodyMap(frame, pose1, crop1, pose2, crop2)
+    feetPoints = bodyMap(frame, body1.pose, body2.pose, crop1, crop2)
     # circle(frame, feetPoints[0], radius=0, color=(0, 0, 255), thickness=10)
     # circle(frame, feetPoints[1], radius=0, color=(0, 0, 255), thickness=10)
     # circle(frame, feetPoints[2], radius=0, color=(0, 0, 255), thickness=30)
@@ -268,30 +268,25 @@ while video.isOpened():
         higherFoot2 = feetPoints[2][1]
     
     # Allocated 75% preference to lower foot y positions
-    body1 = [(feetPoints[0][0]+feetPoints[1][0])/2,(lowerFoot1*0.8+higherFoot1*0.2)]
-    body2 = [(feetPoints[2][0]+feetPoints[3][0])/2,(lowerFoot2*0.8+higherFoot2*0.2)]
+    body1.x = (feetPoints[0][0]+feetPoints[1][0])/2
+    body1.y = lowerFoot1*0.8+higherFoot1*0.2
+    body2.x = (feetPoints[2][0]+feetPoints[3][0])/2
+    body2.y = lowerFoot2*0.8+higherFoot2*0.2
     
     # Body coordinate smoothing
     counter += 1
     coeff = 1. / min(counter, n)
+    body1.xAvg = coeff * body1.x + (1. - coeff) * body1.xAvg
+    body1.yAvg = coeff * body1.y + (1. - coeff) * body1.yAvg
+    body2.xAvg = coeff * body2.x + (1. - coeff) * body2.xAvg
+    body2.yAvg = coeff * body2.y + (1. - coeff) * body2.yAvg
     
-    avg1 = coeff * body1[0] + (1. - coeff) * avg1
-    avg2 = coeff * body1[1] + (1. - coeff) * avg2
-    avg3 = coeff * body2[0] + (1. - coeff) * avg3
-    avg4 = coeff * body2[1] + (1. - coeff) * avg4
-    body1[0] = avg1
-    body1[1] = avg2
-    body2[0] = avg3
-    body2[1] = avg4
-    
+    # Distorting frame and outputting results
     processedFrame, M = courtMap(frame, NtopLeftP, NtopRightP, NbottomLeftP, NbottomRightP)
     processedFrame = showLines(processedFrame)
-    # processedFrame = showPoint(processedFrame, M, feetPoints[0])
-    # processedFrame = showPoint(processedFrame, M, feetPoints[1])
-    # processedFrame = showPoint(processedFrame, M, feetPoints[2])
-    # processedFrame = showPoint(processedFrame, M, feetPoints[3])
-    processedFrame = showPoint(processedFrame, M, body1)
-    processedFrame = showPoint(processedFrame, M, body2)
+
+    processedFrame = showPoint(processedFrame, M, [body1.xAvg,body1.yAvg])
+    processedFrame = showPoint(processedFrame, M, [body2.xAvg,body2.yAvg])
     
     imshow("Frame", processedFrame)
     if waitKey(100000) == ord("q"):

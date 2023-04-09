@@ -4,7 +4,7 @@ from TraceHeader import calculatePixels, videoFile
 
 mp_pose = solutions.pose
 
-def bodyMap(frame, pose1, crop1, pose2, crop2):
+def bodyMap(frame, pose1, pose2, crop1, crop2):
         
     # Mapping of Player 1
     frame1 = frame[crop1.yoffset:crop1.y+crop1.yoffset,crop1.xoffset:crop1.x+crop1.xoffset]
