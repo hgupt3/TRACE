@@ -71,7 +71,7 @@ NtopRightP = None
 NbottomLeftP = None
 NbottomRightP = None
 
-ball_detector = BallDetector('saved states/tracknet_weights_2_classes.pth', out_channels=2)
+ball_detector = BallDetector('TrackNet/Weights.pth', out_channels=2)
 
 while video.isOpened():
     ret, frame = video.read()
@@ -297,6 +297,7 @@ while video.isOpened():
         if ball[0] is not None:
             processedFrame = showPoint(processedFrame, M, ball)
         
+    
     imshow("Frame", processedFrame)
     if waitKey(1) == ord("q"):
         break

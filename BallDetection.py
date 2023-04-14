@@ -3,7 +3,7 @@ import cv2
 import torch
 from PIL import Image, ImageDraw
 
-from BallTrackerNet import BallTrackerNet
+from BallTrackNet import BallTrackerNet
 
 def combine_three_frames(frame1, frame2, frame3, width, height):
     # Resize and type converting for each frame
