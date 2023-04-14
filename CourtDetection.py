@@ -5,6 +5,7 @@ from TraceHeader import videoFile, findIntersection, calculatePixels
 from CourtMapping import courtMap, showLines, showPoint
 from BodyTracking import bodyMap
 from mediapipe import solutions
+from BallDetection import BallDetector
 
 # Retrieve video from video file
 video = VideoCapture(videoFile)
@@ -69,6 +70,8 @@ NtopLeftP = None
 NtopRightP = None
 NbottomLeftP = None
 NbottomRightP = None
+
+ball_detector = BallDetector('saved states/tracknet_weights_2_classes.pth', out_channels=2)
 
 while video.isOpened():
     ret, frame = video.read()
@@ -289,6 +292,11 @@ while video.isOpened():
     processedFrame = showPoint(processedFrame, M, [body1.xAvg,body1.yAvg])
     processedFrame = showPoint(processedFrame, M, [body2.xAvg,body2.yAvg])
     
+    ball = ball_detector.detect_ball(frame)
+    if ball is not None:
+        if ball[0] is not None:
+            processedFrame = showPoint(processedFrame, M, ball)
+        
     imshow("Frame", processedFrame)
     if waitKey(1) == ord("q"):
         break
