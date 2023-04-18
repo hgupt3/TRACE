@@ -50,8 +50,6 @@ class body1:
     xAvg: float = 0
     y: int
     yAvg: float = 0
-    xHands: int
-    yHands: int
     
 class body2:
     pose = mp_pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25) 
@@ -59,8 +57,6 @@ class body2:
     xAvg: float = 0
     y: int
     yAvg: float = 0
-    xHands: int
-    yHands: int
 
 # Setting reference frame lines
 extraLen = width/3
@@ -254,7 +250,7 @@ while video.isOpened():
         # circle(frame, NbottomRightP, radius=0, color=(255, 0, 255), thickness=10)
 
     # Displaying feet and hand points from bodyMap function
-    feetPoints, handPoints = bodyMap(frame, body1.pose, body2.pose, crop1, crop2)
+    feetPoints, handPoints, nosePoints = bodyMap(frame, body1.pose, body2.pose, crop1, crop2)
 
     # circle(frame, handPoints[0], radius=0, color=(0, 0, 255), thickness=10)
     # circle(frame, handPoints[1], radius=0, color=(0, 0, 255), thickness=10)
@@ -284,13 +280,9 @@ while video.isOpened():
     # Allocated 75% preference to lower foot y positions
     body1.x = (feetPoints[0][0]+feetPoints[1][0])/2
     body1.y = lowerFoot1*0.8+higherFoot1*0.2
-    body1.xHands = (handPoints[0][0]+handPoints[1][0])/2
-    body1.yHands = (handPoints[0][1]+handPoints[1][1])/2
 
     body2.x = (feetPoints[2][0]+feetPoints[3][0])/2
     body2.y = lowerFoot2*0.8+higherFoot2*0.2
-    body2.xHands = (handPoints[2][0]+handPoints[3][0])/2
-    body2.yHands = (handPoints[2][1]+handPoints[3][1])/2
     
     # Body coordinate smoothing
     counter += 1
@@ -301,8 +293,8 @@ while video.isOpened():
     body2.yAvg = coeff * body2.y + (1. - coeff) * body2.yAvg
     
     # Calculate euclidian distance between average of feet and hand indexes for both players
-    circleRadiusBody1 = int(euclideanDistance([body1.xHands, body1.yHands], [body1.x, body1.y]))
-    circleRadiusBody2 = int(euclideanDistance([body2.xHands, body2.yHands], [body2.x, body2.y]))
+    circleRadiusBody1 = int(0.75 * euclideanDistance(nosePoints[0], [body1.x, body1.y]))
+    circleRadiusBody2 = int(0.75 * euclideanDistance(nosePoints[1], [body2.x, body2.y]))
 
     # Draw a circle around both hands for both players
     # circle(frame, (int(handPoints[0][0]),  int(handPoints[0][1])), circleRadiusBody1, (255,0,0), 2) # left
