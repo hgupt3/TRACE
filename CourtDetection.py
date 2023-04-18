@@ -295,8 +295,8 @@ while video.isOpened():
     ball = ball_detector.detect_ball(frame)
     if ball is not None:
         if ball[0] is not None:
+            # circle(frame, (int(ball[0]),  int(ball[1])), 4, (255,0,0), 4)
             processedFrame = showPoint(processedFrame, M, ball)
-        
     
     imshow("Frame", processedFrame)
     if waitKey(1) == ord("q"):
