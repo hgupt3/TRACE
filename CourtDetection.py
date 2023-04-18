@@ -6,6 +6,7 @@ from CourtMapping import courtMap, showLines, showPoint
 from BodyTracking import bodyMap
 from mediapipe import solutions
 from BallDetection import BallDetector
+from BallMapping import euclideanDistance
 
 # Retrieve video from video file
 video = VideoCapture(videoFile)
@@ -48,7 +49,9 @@ class body1:
     x: int
     xAvg: float = 0
     y: int
-    yAvg: float = 0 
+    yAvg: float = 0
+    xHands: int
+    yHands: int
     
 class body2:
     pose = mp_pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25) 
@@ -56,6 +59,8 @@ class body2:
     xAvg: float = 0
     y: int
     yAvg: float = 0
+    xHands: int
+    yHands: int
 
 # Setting reference frame lines
 extraLen = width/3
@@ -248,8 +253,14 @@ while video.isOpened():
         # circle(frame, NbottomLeftP, radius=0, color=(255, 0, 255), thickness=10)
         # circle(frame, NbottomRightP, radius=0, color=(255, 0, 255), thickness=10)
 
-    # Displaying feet points from bodyMap function
-    feetPoints = bodyMap(frame, body1.pose, body2.pose, crop1, crop2)
+    # Displaying feet and hand points from bodyMap function
+    feetPoints, handPoints = bodyMap(frame, body1.pose, body2.pose, crop1, crop2)
+
+    # circle(frame, handPoints[0], radius=0, color=(0, 0, 255), thickness=10)
+    # circle(frame, handPoints[1], radius=0, color=(0, 0, 255), thickness=10)
+    # circle(frame, handPoints[2], radius=0, color=(0, 0, 255), thickness=30)
+    # circle(frame, handPoints[3], radius=0, color=(0, 0, 255), thickness=30)
+
     # circle(frame, feetPoints[0], radius=0, color=(0, 0, 255), thickness=10)
     # circle(frame, feetPoints[1], radius=0, color=(0, 0, 255), thickness=10)
     # circle(frame, feetPoints[2], radius=0, color=(0, 0, 255), thickness=30)
@@ -273,8 +284,13 @@ while video.isOpened():
     # Allocated 75% preference to lower foot y positions
     body1.x = (feetPoints[0][0]+feetPoints[1][0])/2
     body1.y = lowerFoot1*0.8+higherFoot1*0.2
+    body1.xHands = (handPoints[0][0]+handPoints[1][0])/2
+    body1.yHands = (handPoints[0][1]+handPoints[1][1])/2
+
     body2.x = (feetPoints[2][0]+feetPoints[3][0])/2
     body2.y = lowerFoot2*0.8+higherFoot2*0.2
+    body2.xHands = (handPoints[2][0]+handPoints[3][0])/2
+    body2.yHands = (handPoints[2][1]+handPoints[3][1])/2
     
     # Body coordinate smoothing
     counter += 1
@@ -284,6 +300,17 @@ while video.isOpened():
     body2.xAvg = coeff * body2.x + (1. - coeff) * body2.xAvg
     body2.yAvg = coeff * body2.y + (1. - coeff) * body2.yAvg
     
+    # Calculate euclidian distance between average of feet and hand indexes for both players
+    circleRadiusBody1 = int(euclideanDistance([body1.xHands, body1.yHands], [body1.x, body1.y]))
+    circleRadiusBody2 = int(euclideanDistance([body2.xHands, body2.yHands], [body2.x, body2.y]))
+
+    # Draw a circle around both hands for both players
+    # circle(frame, (int(handPoints[0][0]),  int(handPoints[0][1])), circleRadiusBody1, (255,0,0), 2) # left
+    circle(frame, (int(handPoints[1][0]),  int(handPoints[1][1])), circleRadiusBody1, (255,0,0), 2) # right
+
+    # circle(frame, (int(handPoints[2][0]),  int(handPoints[2][1])), circleRadiusBody2, (255,0,0), 2) # left
+    circle(frame, (int(handPoints[3][0]),  int(handPoints[3][1])), circleRadiusBody2, (255,0,0), 2) # right
+
     # Distorting frame and outputting results
     processedFrame, M = courtMap(frame, NtopLeftP, NtopRightP, NbottomLeftP, NbottomRightP)
     # rectangle(processedFrame, (0,0),(967,1585),(0,0,0),2000)
@@ -292,13 +319,13 @@ while video.isOpened():
     processedFrame = showPoint(processedFrame, M, [body1.xAvg,body1.yAvg])
     processedFrame = showPoint(processedFrame, M, [body2.xAvg,body2.yAvg])
     
-    ball = ball_detector.detect_ball(frame)
-    if ball is not None:
-        if ball[0] is not None:
-            # circle(frame, (int(ball[0]),  int(ball[1])), 4, (255,0,0), 4)
-            processedFrame = showPoint(processedFrame, M, ball)
+    # ball = ball_detector.detect_ball(frame)
+    # if ball is not None:
+    #     if ball[0] is not None:
+    #         circle(frame, (int(ball[0]),  int(ball[1])), 4, (255,0,0), 4)
+            # processedFrame = showPoint(processedFrame, M, ball)
     
-    imshow("Frame", processedFrame)
+    imshow("Frame", frame)
     if waitKey(1) == ord("q"):
         break
     

@@ -8,8 +8,8 @@ checkPath(videoFile)
 frameWidth = int(video.get(3))
 frameHeight = int(video.get(4))
 
-width = 967
-height = 1585
+width = int(967/1.5)
+height = int(1585/1.5)
 
 ratio = (1097/2377)
 courtHeight = int(height * 0.6)
@@ -30,7 +30,7 @@ def courtMap(frame, top_left, top_right, bottom_left, bottom_right):
     return dst, M
 
 def showLines(frame):
-    rectangle(frame, (0,0),(967,1585),(255,0,0),6)
+    rectangle(frame, (0,0),(width,height),(255,0,0),6)
     line(frame, courtTL, courtTR, (0, 0, 255), 2)
     line(frame, courtBL, courtBR, (0, 0, 255), 2)
     line(frame, courtTL, courtBL, (0, 0, 255), 2)
