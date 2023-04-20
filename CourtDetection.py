@@ -298,8 +298,8 @@ while video.isOpened():
     body2.yAvg = coeff * body2.y + (1. - coeff) * body2.yAvg
     
     # Calculate euclidian distance between average of feet and hand indexes for both players
-    circleRadiusBody1 = int(0.75 * euclideanDistance(nosePoints[0], [body1.x, body1.y]))
-    circleRadiusBody2 = int(0.75 * euclideanDistance(nosePoints[1], [body2.x, body2.y]))
+    circleRadiusBody1 = int(0.5 * euclideanDistance(nosePoints[0], [body1.x, body1.y]))
+    circleRadiusBody2 = int(0.5 * euclideanDistance(nosePoints[1], [body2.x, body2.y]))
 
     # Distorting frame and outputting results
     processedFrame, M = courtMap(frame, NtopLeftP, NtopRightP, NbottomLeftP, NbottomRightP)
@@ -325,7 +325,7 @@ while video.isOpened():
         circle(frame, ball, 4, (255,0,0), 4)
         if ballPrev is not None:
             if withinCircle(handPointsPrev[1], circleRadiusBody1, ballPrev):
-                if closestPoint(handPointsPrev[1], ballPrev, ball) and flag[1] == 0:
+                if closestPoint(handPointsPrev[1], handPoints[1], ballPrev, ball) and flag[1] == 0:
                     flag[1] = 1
                     circle(frame, ballPrev, 4, (0,0,255), 4)
                     print(ballPrev)
@@ -333,7 +333,7 @@ while video.isOpened():
                 flag[1] = 0
                 
             if withinCircle(handPointsPrev[3], circleRadiusBody2, ballPrev):
-                if closestPoint(handPointsPrev[3], ballPrev, ball) and flag[3] == 0:
+                if closestPoint(handPointsPrev[3], handPoints[3], ballPrev, ball) and flag[3] == 0:
                     flag[3] = 1
                     circle(frame, ballPrev, 4, (0,0,255), 4)
                     print(ballPrev)

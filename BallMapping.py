@@ -6,6 +6,6 @@ def euclideanDistance(point1, point2):
 def withinCircle(center, radius, point):
     return radius > euclideanDistance(center, point)
 
-def closestPoint(center, prevPoint, currPoint):
-    if euclideanDistance(center, prevPoint) <= euclideanDistance(center, currPoint):
+def closestPoint(prevCenter, currCenter, prevPoint, currPoint):
+    if euclideanDistance(prevCenter, prevPoint) <= euclideanDistance(currCenter, currPoint):
         return True
