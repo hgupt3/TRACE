@@ -6,7 +6,7 @@ from CourtMapping import courtMap, showLines, showPoint
 from BodyTracking import bodyMap
 from mediapipe import solutions
 from BallDetection import BallDetector
-from BallMapping import euclideanDistance
+from BallMapping import euclideanDistance, withinCircle, closestPoint
 
 # Retrieve video from video file
 video = VideoCapture(videoFile)
@@ -73,6 +73,10 @@ NbottomLeftP = None
 NbottomRightP = None
 
 ball_detector = BallDetector('TrackNet/Weights.pth', out_channels=2)
+ballProximity = []
+ball = None
+handPoints = None
+flag = [0,0,0,0]
 
 while video.isOpened():
     ret, frame = video.read()
@@ -250,6 +254,7 @@ while video.isOpened():
         # circle(frame, NbottomRightP, radius=0, color=(255, 0, 255), thickness=10)
 
     # Displaying feet and hand points from bodyMap function
+    handPointsPrev = handPoints
     feetPoints, handPoints, nosePoints = bodyMap(frame, body1.pose, body2.pose, crop1, crop2)
 
     # circle(frame, handPoints[0], radius=0, color=(0, 0, 255), thickness=10)
@@ -296,13 +301,6 @@ while video.isOpened():
     circleRadiusBody1 = int(0.75 * euclideanDistance(nosePoints[0], [body1.x, body1.y]))
     circleRadiusBody2 = int(0.75 * euclideanDistance(nosePoints[1], [body2.x, body2.y]))
 
-    # Draw a circle around both hands for both players
-    # circle(frame, (int(handPoints[0][0]),  int(handPoints[0][1])), circleRadiusBody1, (255,0,0), 2) # left
-    circle(frame, (int(handPoints[1][0]),  int(handPoints[1][1])), circleRadiusBody1, (255,0,0), 2) # right
-
-    # circle(frame, (int(handPoints[2][0]),  int(handPoints[2][1])), circleRadiusBody2, (255,0,0), 2) # left
-    circle(frame, (int(handPoints[3][0]),  int(handPoints[3][1])), circleRadiusBody2, (255,0,0), 2) # right
-
     # Distorting frame and outputting results
     processedFrame, M = courtMap(frame, NtopLeftP, NtopRightP, NbottomLeftP, NbottomRightP)
     # rectangle(processedFrame, (0,0),(967,1585),(0,0,0),2000)
@@ -311,11 +309,36 @@ while video.isOpened():
     processedFrame = showPoint(processedFrame, M, [body1.xAvg,body1.yAvg])
     processedFrame = showPoint(processedFrame, M, [body2.xAvg,body2.yAvg])
     
-    # ball = ball_detector.detect_ball(frame)
-    # if ball is not None:
-    #     if ball[0] is not None:
-    #         circle(frame, (int(ball[0]),  int(ball[1])), 4, (255,0,0), 4)
-            # processedFrame = showPoint(processedFrame, M, ball)
+    ball_detector.detect_ball(frame)
+    if ball_detector.xy_coordinates[-1][0] is not None:
+        ballPrev = ball
+        ball = ball_detector.xy_coordinates[-1]
+    
+    # Draw a circle around both hands for both players
+    # circle(frame, (handPoints[0]), circleRadiusBody1, (255,0,0), 2) # left
+    circle(frame, (handPoints[1]), circleRadiusBody1, (255,0,0), 2) # right
+
+    # circle(frame, (handPoints[2]), circleRadiusBody2, (255,0,0), 2) # left
+    circle(frame, (handPoints[3]), circleRadiusBody2, (255,0,0), 2) # right
+    
+    if ball is not None:
+        circle(frame, ball, 4, (255,0,0), 4)
+        if ballPrev is not None:
+            if withinCircle(handPointsPrev[1], circleRadiusBody1, ballPrev):
+                if closestPoint(handPointsPrev[1], ballPrev, ball) and flag[1] == 0:
+                    flag[1] = 1
+                    circle(frame, ballPrev, 4, (0,0,255), 4)
+                    print(ballPrev)
+            else:
+                flag[1] = 0
+                
+            if withinCircle(handPointsPrev[3], circleRadiusBody2, ballPrev):
+                if closestPoint(handPointsPrev[3], ballPrev, ball) and flag[3] == 0:
+                    flag[3] = 1
+                    circle(frame, ballPrev, 4, (0,0,255), 4)
+                    print(ballPrev)
+            else:
+                flag[3] = 0
     
     imshow("Frame", frame)
     if waitKey(1) == ord("q"):

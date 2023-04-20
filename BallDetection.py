@@ -78,12 +78,11 @@ class BallDetector:
             x, y = self.detector.inference(frames)
             if x is not None:
                 # Rescale the indices to fit frame dimensions
-                x = x * (self.video_width / self.model_input_width)
-                y = y * (self.video_height / self.model_input_height)
+                x = int(x * (self.video_width / self.model_input_width))
+                y = int(y * (self.video_height / self.model_input_height))
 
                 # Check distance from previous location and remove outliers
                 if self.xy_coordinates[-1][0] is not None:
                     if np.linalg.norm(np.array([x,y]) - self.xy_coordinates[-1]) > self.threshold_dist:
                         x, y = None, None
             self.xy_coordinates = np.append(self.xy_coordinates, np.array([[x, y]]), axis=0)
-            return [x, y]
