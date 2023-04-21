@@ -20,8 +20,8 @@ class crop1:
     xoffset: float = 0/100
     xcenter: int = 1 
     
-    y: float = 33/100
-    yoffset: float = 0/100
+    y: float = 30/100
+    yoffset: float = 3/100
     ycenter: int = 0
     
 class crop2:
@@ -36,7 +36,7 @@ class crop2:
 # Calculations for pixels used in both crops
 crop1 = calculatePixels(crop1, width, height)
 crop2 = calculatePixels(crop2, width, height)
-
+print(crop1.yoffset)
 # Body smoothing, n is number of frames averaged
 n = 3
 counter = 0
@@ -77,6 +77,7 @@ ballProximity = []
 ball = None
 handPoints = None
 flag = [0,0,0,0]
+coords = []
 
 while video.isOpened():
     ret, frame = video.read()
@@ -257,91 +258,96 @@ while video.isOpened():
     handPointsPrev = handPoints
     feetPoints, handPoints, nosePoints = bodyMap(frame, body1.pose, body2.pose, crop1, crop2)
 
-    # circle(frame, handPoints[0], radius=0, color=(0, 0, 255), thickness=10)
-    # circle(frame, handPoints[1], radius=0, color=(0, 0, 255), thickness=10)
-    # circle(frame, handPoints[2], radius=0, color=(0, 0, 255), thickness=30)
-    # circle(frame, handPoints[3], radius=0, color=(0, 0, 255), thickness=30)
+    if (not any(item is None for sublist in feetPoints for item in sublist)) or (not any(item is None for sublist in handPoints for item in sublist)) or (not any(item is None for sublist in nosePoints for item in sublist)):
+        # circle(frame, handPoints[0], radius=0, color=(0, 0, 255), thickness=10)
+        # circle(frame, handPoints[1], radius=0, color=(0, 0, 255), thickness=10)
+        # circle(frame, handPoints[2], radius=0, color=(0, 0, 255), thickness=30)
+        # circle(frame, handPoints[3], radius=0, color=(0, 0, 255), thickness=30)
 
-    # circle(frame, feetPoints[0], radius=0, color=(0, 0, 255), thickness=10)
-    # circle(frame, feetPoints[1], radius=0, color=(0, 0, 255), thickness=10)
-    # circle(frame, feetPoints[2], radius=0, color=(0, 0, 255), thickness=30)
-    # circle(frame, feetPoints[3], radius=0, color=(0, 0, 255), thickness=30)
-    
-    # Prioritizing lower foot y in body average y position
-    if feetPoints[0][1] > feetPoints[1][1]:
-        lowerFoot1 = feetPoints[0][1]
-        higherFoot1 = feetPoints[1][1]
-    else:
-        lowerFoot1 = feetPoints[1][1]
-        higherFoot1 = feetPoints[0][1]
+        # circle(frame, feetPoints[0], radius=0, color=(0, 0, 255), thickness=10)
+        # circle(frame, feetPoints[1], radius=0, color=(0, 0, 255), thickness=10)
+        # circle(frame, feetPoints[2], radius=0, color=(0, 0, 255), thickness=30)
+        # circle(frame, feetPoints[3], radius=0, color=(0, 0, 255), thickness=30)
         
-    if feetPoints[2][1] > feetPoints[3][1]:
-        lowerFoot2 = feetPoints[2][1]
-        higherFoot2 = feetPoints[3][1]
-    else:
-        lowerFoot2 = feetPoints[3][1]
-        higherFoot2 = feetPoints[2][1]
-    
-    # Allocated 75% preference to lower foot y positions
-    body1.x = (feetPoints[0][0]+feetPoints[1][0])/2
-    body1.y = lowerFoot1*0.8+higherFoot1*0.2
+        # Prioritizing lower foot y in body average y position
+        if feetPoints[0][1] > feetPoints[1][1]:
+            lowerFoot1 = feetPoints[0][1]
+            higherFoot1 = feetPoints[1][1]
+        else:
+            lowerFoot1 = feetPoints[1][1]
+            higherFoot1 = feetPoints[0][1]
+            
+        if feetPoints[2][1] > feetPoints[3][1]:
+            lowerFoot2 = feetPoints[2][1]
+            higherFoot2 = feetPoints[3][1]
+        else:
+            lowerFoot2 = feetPoints[3][1]
+            higherFoot2 = feetPoints[2][1]
+        
+        # Allocated 75% preference to lower foot y positions
+        body1.x = (feetPoints[0][0]+feetPoints[1][0])/2
+        body1.y = lowerFoot1*0.8+higherFoot1*0.2
 
-    body2.x = (feetPoints[2][0]+feetPoints[3][0])/2
-    body2.y = lowerFoot2*0.8+higherFoot2*0.2
-    
-    # Body coordinate smoothing
-    counter += 1
-    coeff = 1. / min(counter, n)
-    body1.xAvg = coeff * body1.x + (1. - coeff) * body1.xAvg
-    body1.yAvg = coeff * body1.y + (1. - coeff) * body1.yAvg
-    body2.xAvg = coeff * body2.x + (1. - coeff) * body2.xAvg
-    body2.yAvg = coeff * body2.y + (1. - coeff) * body2.yAvg
-    
-    # Calculate euclidian distance between average of feet and hand indexes for both players
-    circleRadiusBody1 = int(0.5 * euclideanDistance(nosePoints[0], [body1.x, body1.y]))
-    circleRadiusBody2 = int(0.5 * euclideanDistance(nosePoints[1], [body2.x, body2.y]))
+        body2.x = (feetPoints[2][0]+feetPoints[3][0])/2
+        body2.y = lowerFoot2*0.8+higherFoot2*0.2
+        
+        # Body coordinate smoothing
+        counter += 1
+        coeff = 1. / min(counter, n)
+        body1.xAvg = coeff * body1.x + (1. - coeff) * body1.xAvg
+        body1.yAvg = coeff * body1.y + (1. - coeff) * body1.yAvg
+        body2.xAvg = coeff * body2.x + (1. - coeff) * body2.xAvg
+        body2.yAvg = coeff * body2.y + (1. - coeff) * body2.yAvg
+        
+        # Calculate euclidian distance between average of feet and hand indexes for both players
+        circleRadiusBody1 = int(0.7 * euclideanDistance(nosePoints[0], [body1.x, body1.y]))
+        circleRadiusBody2 = int(0.7 * euclideanDistance(nosePoints[1], [body2.x, body2.y]))
+        
+        # Distorting frame and outputting results
+        processedFrame, M = courtMap(frame, NtopLeftP, NtopRightP, NbottomLeftP, NbottomRightP)
+        # rectangle(processedFrame, (0,0),(967,1585),(0,0,0),2000)
+        processedFrame = showLines(processedFrame)
 
-    # Distorting frame and outputting results
-    processedFrame, M = courtMap(frame, NtopLeftP, NtopRightP, NbottomLeftP, NbottomRightP)
-    # rectangle(processedFrame, (0,0),(967,1585),(0,0,0),2000)
-    processedFrame = showLines(processedFrame)
-
-    processedFrame = showPoint(processedFrame, M, [body1.xAvg,body1.yAvg])
-    processedFrame = showPoint(processedFrame, M, [body2.xAvg,body2.yAvg])
-    
-    ball_detector.detect_ball(frame)
-    if ball_detector.xy_coordinates[-1][0] is not None:
+        processedFrame = showPoint(processedFrame, M, [body1.xAvg,body1.yAvg])
+        processedFrame = showPoint(processedFrame, M, [body2.xAvg,body2.yAvg])
+        
         ballPrev = ball
-        ball = ball_detector.xy_coordinates[-1]
-    
-    # Draw a circle around both hands for both players
-    # circle(frame, (handPoints[0]), circleRadiusBody1, (255,0,0), 2) # left
-    circle(frame, (handPoints[1]), circleRadiusBody1, (255,0,0), 2) # right
+        ball_detector.detect_ball(frame)
+        if ball_detector.xy_coordinates[-1][0] is not None:
+            ball = ball_detector.xy_coordinates[-1]
+        
+        # Draw a circle around both hands for both players
+        # circle(frame, (handPoints[0]), circleRadiusBody1, (255,0,0), 2) # left
+        circle(frame, (handPoints[1]), circleRadiusBody1, (255,0,0), 2) # right
 
-    # circle(frame, (handPoints[2]), circleRadiusBody2, (255,0,0), 2) # left
-    circle(frame, (handPoints[3]), circleRadiusBody2, (255,0,0), 2) # right
-    
-    if ball is not None:
-        circle(frame, ball, 4, (255,0,0), 4)
-        if ballPrev is not None:
-            if withinCircle(handPointsPrev[1], circleRadiusBody1, ballPrev):
-                if closestPoint(handPointsPrev[1], handPoints[1], ballPrev, ball) and flag[1] == 0:
-                    flag[1] = 1
-                    circle(frame, ballPrev, 4, (0,0,255), 4)
-                    print(ballPrev)
-            else:
-                flag[1] = 0
-                
-            if withinCircle(handPointsPrev[3], circleRadiusBody2, ballPrev):
-                if closestPoint(handPointsPrev[3], handPoints[3], ballPrev, ball) and flag[3] == 0:
-                    flag[3] = 1
-                    circle(frame, ballPrev, 4, (0,0,255), 4)
-                    print(ballPrev)
-            else:
-                flag[3] = 0
+        # circle(frame, (handPoints[2]), circleRadiusBody2, (255,0,0), 2) # left
+        circle(frame, (handPoints[3]), circleRadiusBody2, (255,0,0), 2) # right
+        
+        if ball is not None:
+            circle(frame, ball, 4, (0,255,0), 4)
+            if ballPrev is not None:
+                circle(frame, ballPrev, 4, (255,0,0), 4)
+                if withinCircle(handPointsPrev[1], circleRadiusBody1, ballPrev):
+                    if closestPoint(handPointsPrev[1], handPoints[1], ballPrev, ball) and flag[1] == 0:
+                        flag[1] = 1
+                        coords.append(ballPrev)
+                        print(ballPrev)
+                else:
+                    flag[1] = 0
+                    
+                if withinCircle(handPointsPrev[3], circleRadiusBody2, ballPrev):
+                    if closestPoint(handPointsPrev[3], handPoints[3], ballPrev, ball) and flag[3] == 0:
+                        flag[3] = 1
+                        coords.append(ballPrev)
+                        print(ballPrev)
+                else:
+                    flag[3] = 0
+        
+        for i in range(len(coords)):
+            circle(frame, coords[i], 4, (0,0,255), 4)
     
     imshow("Frame", frame)
-    if waitKey(1) == ord("q"):
+    if waitKey(1000000000) == ord("q"):
         break
     
 video.release()

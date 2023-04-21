@@ -122,7 +122,7 @@ class BallTrackerNet(nn.Module):
         ret, heatmap = cv2.threshold(heatmap, 127, 255, cv2.THRESH_BINARY)
 
         # find the circle in image with 2<=radius<=7
-        circles = cv2.HoughCircles(heatmap, cv2.HOUGH_GRADIENT, dp=1, minDist=1, param1=50, param2=2, minRadius=2,
+        circles = cv2.HoughCircles(heatmap, cv2.HOUGH_GRADIENT, dp=1, minDist=1, param1=50, param2=8, minRadius=2,
                                    maxRadius=7)
         # check if there have any tennis be detected
         if circles is not None:
