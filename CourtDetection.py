@@ -20,8 +20,8 @@ class crop1:
     xoffset: float = 0/100
     xcenter: int = 1 
     
-    y: float = 30/100
-    yoffset: float = 3/100
+    y: float = 33/100
+    yoffset: float = 0/100
     ycenter: int = 0
     
 class crop2:
@@ -78,6 +78,8 @@ ball = None
 handPoints = None
 flag = [0,0,0,0]
 coords = []
+minDist1 = height*width
+minDist2 = height*width
 
 while video.isOpened():
     ret, frame = video.read()
@@ -301,7 +303,7 @@ while video.isOpened():
         
         # Calculate euclidian distance between average of feet and hand indexes for both players
         circleRadiusBody1 = int(0.7 * euclideanDistance(nosePoints[0], [body1.x, body1.y]))
-        circleRadiusBody2 = int(0.7 * euclideanDistance(nosePoints[1], [body2.x, body2.y]))
+        circleRadiusBody2 = int(0.6 * euclideanDistance(nosePoints[1], [body2.x, body2.y]))
         
         # Distorting frame and outputting results
         processedFrame, M = courtMap(frame, NtopLeftP, NtopRightP, NbottomLeftP, NbottomRightP)
@@ -324,30 +326,35 @@ while video.isOpened():
         circle(frame, (handPoints[3]), circleRadiusBody2, (255,0,0), 2) # right
         
         if ball is not None:
-            circle(frame, ball, 4, (0,255,0), 4)
-            if ballPrev is not None:
-                circle(frame, ballPrev, 4, (255,0,0), 4)
-                if withinCircle(handPointsPrev[1], circleRadiusBody1, ballPrev):
-                    if closestPoint(handPointsPrev[1], handPoints[1], ballPrev, ball) and flag[1] == 0:
-                        flag[1] = 1
-                        coords.append(ballPrev)
-                        print(ballPrev)
+            circle(frame, ball, 4, (0,255,0), 3)
+            circle(frame, ballPrev, 3, (0,255,0), 2)
+            if ball is not ballPrev:
+                if withinCircle(handPoints[1], circleRadiusBody1, ball):
+                    if minDist1>euclideanDistance(handPoints[1], ball):
+                        minDist1 = euclideanDistance(handPoints[1], ball)
+                        coords.append((ball, counter))
+                        print(ball, counter)
                 else:
-                    flag[1] = 0
+                    minDist1 = circleRadiusBody1
                     
-                if withinCircle(handPointsPrev[3], circleRadiusBody2, ballPrev):
-                    if closestPoint(handPointsPrev[3], handPoints[3], ballPrev, ball) and flag[3] == 0:
-                        flag[3] = 1
-                        coords.append(ballPrev)
-                        print(ballPrev)
+                if withinCircle(handPoints[3], circleRadiusBody2, ball):
+                    if minDist2>euclideanDistance(handPoints[3], ball):
+                        minDist2 = euclideanDistance(handPoints[3], ball)
+                        coords.append((ball, counter))
+                        print(ball, counter)
                 else:
-                    flag[3] = 0
+                    minDist2 = circleRadiusBody2
+                    
+        for i in range(1,len(coords)):
+            if euclideanDistance(coords[i][0], coords[i-1][0]) < 200:
+                del coords[i-1]
+                i -= 1
         
         for i in range(len(coords)):
-            circle(frame, coords[i], 4, (0,0,255), 4)
+            circle(frame, coords[i][0], 4, (0,0,255), 4)
     
     imshow("Frame", frame)
-    if waitKey(1000000000) == ord("q"):
+    if waitKey(1) == ord("q"):
         break
     
 video.release()
