@@ -1,17 +1,20 @@
 from numpy import pi, ones, zeros, uint8, where, cos, sin
 from cv2 import VideoCapture, cvtColor, Canny, line, imshow, waitKey, destroyAllWindows, COLOR_BGR2GRAY, HoughLinesP
-from cv2 import threshold, THRESH_BINARY, dilate, floodFill, circle, HoughLines, erode, rectangle
+from cv2 import threshold, THRESH_BINARY, dilate, floodFill, circle, HoughLines, erode, rectangle, VideoWriter, VideoWriter_fourcc
 from TraceHeader import videoFile, findIntersection, calculatePixels
-from CourtMapping import courtMap, showLines, showPoint
+from CourtMapping import courtMap, showLines, showPoint, heightP, widthP, givePoint
 from BodyTracking import bodyMap
 from mediapipe import solutions
 from BallDetection import BallDetector
-from BallMapping import euclideanDistance, withinCircle, closestPoint
+from BallMapping import euclideanDistance, withinCircle
 
 # Retrieve video from video file
 video = VideoCapture(videoFile)
 width = int(video.get(3))
 height = int(video.get(4))
+
+fourcc = VideoWriter_fourcc(*'mp4v')
+clip = VideoWriter('../Videos/Video.mp4',fourcc,25.0,(widthP,heightP))
 
 # Ratios of the crop width, height, and offsets
 # If centered is 1, program ignores offset and centers frame
@@ -307,7 +310,8 @@ while video.isOpened():
         
         # Distorting frame and outputting results
         processedFrame, M = courtMap(frame, NtopLeftP, NtopRightP, NbottomLeftP, NbottomRightP)
-        # rectangle(processedFrame, (0,0),(967,1585),(0,0,0),2000)
+        # Create black background
+        rectangle(processedFrame, (0,0),(967,1585),(0,0,0),2000)
         processedFrame = showLines(processedFrame)
 
         processedFrame = showPoint(processedFrame, M, [body1.xAvg,body1.yAvg])
@@ -328,34 +332,77 @@ while video.isOpened():
         if ball is not None:
             circle(frame, ball, 4, (0,255,0), 3)
             circle(frame, ballPrev, 3, (0,255,0), 2)
+            
+            # If ball location is unique
             if ball is not ballPrev:
+                # Find locations where the ball gets closer to the body
                 if withinCircle(handPoints[1], circleRadiusBody1, ball):
                     if minDist1>euclideanDistance(handPoints[1], ball):
                         minDist1 = euclideanDistance(handPoints[1], ball)
-                        coords.append((ball, counter))
-                        print(ball, counter)
+                        coords.append((ball, givePoint(M, ball), givePoint(M, (body1.x,body1.y)), counter))
                 else:
                     minDist1 = circleRadiusBody1
-                    
                 if withinCircle(handPoints[3], circleRadiusBody2, ball):
                     if minDist2>euclideanDistance(handPoints[3], ball):
                         minDist2 = euclideanDistance(handPoints[3], ball)
-                        coords.append((ball, counter))
-                        print(ball, counter)
+                        coords.append((ball, givePoint(M, ball), givePoint(M, (body2.x,body2.y)), counter))
                 else:
                     minDist2 = circleRadiusBody2
-                    
-        for i in range(1,len(coords)):
-            if euclideanDistance(coords[i][0], coords[i-1][0]) < 200:
-                del coords[i-1]
-                i -= 1
         
+        # If the previous ball coordinate is close to the current one, remove the previous one
+        if len(coords)>2:
+            if euclideanDistance(coords[-1][0], coords[-2][0]) < 200:
+                del coords[-2]
+        
+        # Display hit points
         for i in range(len(coords)):
             circle(frame, coords[i][0], 4, (0,0,255), 4)
     
+    # Write processed frame to clip
+    clip.write(processedFrame)
     imshow("Frame", frame)
     if waitKey(1) == ord("q"):
         break
-    
+
+# Last found location of ball should be appended to ball array
+coords.append((ball, givePoint(M, ball), givePoint(M, ball), counter))
+
+clip.release()
 video.release()
+destroyAllWindows()
+
+ballArray = []
+# Create inbetween points for the ball points found
+while len(coords)>1:
+    time = coords[0][3]
+    location = [coords[0][1][0],coords[0][2][1]]
+    del coords[0]
+    timeDiff = coords[0][3]-time
+    for i in range(time, coords[0][3]):
+        x = int(location[0]+((i-time)/timeDiff)*(coords[0][1][0]-location[0]))
+        y = int(location[1]+((i-time)/timeDiff)*(coords[0][2][1]-location[1]))
+        ballArray.append(((x,y), i))       
+
+# Overlay ball information on the previous video
+clip = VideoWriter('../Videos/Video1.mp4',fourcc,25.0,(widthP,heightP))
+counter = 0
+video = VideoCapture('../Videos/Video.mp4')
+while video.isOpened():
+    ret, frame = video.read()
+    if frame is None:
+        break
+    
+    counter += 1
+    for i in range(len(ballArray)):
+        if counter == ballArray[i][1]:
+            circle(frame, (ballArray[i][0]), 4,(255,0,0),2)
+            break
+        
+    clip.write(frame)
+    imshow("Frame", frame)
+    if waitKey(1) == ord("q"):
+        break
+
+video.release()
+clip.release()
 destroyAllWindows()

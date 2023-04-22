@@ -8,6 +8,9 @@ checkPath(videoFile)
 frameWidth = int(video.get(3))
 frameHeight = int(video.get(4))
 
+widthP = int(967/1.5)
+heightP = int(1585/1.5)
+
 width = int(967/1.5)
 height = int(1585/1.5)
 
@@ -42,3 +45,8 @@ def showPoint(frame, M, point):
     transformed = perspectiveTransform(points, M)[0][0]
     circle(frame, (int(transformed[0]), int(transformed[1])), radius=0, color=(0, 0, 255), thickness=20)
     return frame
+
+def givePoint(M, point):
+    points = float32([[point]])
+    transformed = perspectiveTransform(points, M)[0][0]
+    return (int(transformed[0]), int(transformed[1]))
