@@ -39,7 +39,6 @@ class crop2:
 # Calculations for pixels used in both crops
 crop1 = calculatePixels(crop1, width, height)
 crop2 = calculatePixels(crop2, width, height)
-print(crop1.yoffset)
 # Body smoothing, n is number of frames averaged
 n = 3
 counter = 0
@@ -311,7 +310,7 @@ while video.isOpened():
         # Distorting frame and outputting results
         processedFrame, M = courtMap(frame, NtopLeftP, NtopRightP, NbottomLeftP, NbottomRightP)
         # Create black background
-        rectangle(processedFrame, (0,0),(967,1585),(0,0,0),2000)
+        # rectangle(processedFrame, (0,0),(967,1585),(0,0,0),2000)
         processedFrame = showLines(processedFrame)
 
         processedFrame = showPoint(processedFrame, M, [body1.xAvg,body1.yAvg])
@@ -348,9 +347,20 @@ while video.isOpened():
                         coords.append((ball, givePoint(M, ball), givePoint(M, (body2.x,body2.y)), counter))
                 else:
                     minDist2 = circleRadiusBody2
+
+                # Find locations of ball bounce
+
+                if ball_detector.xy_coordinates[-2][0] is not None:
+
+                    xVelocity = ball[0] - ballPrev[0]
+                    yVelocity = ball[1] - ballPrev[1]
+                    
+                    print(xVelocity, yVelocity)
+                    
+
         
         # If the previous ball coordinate is close to the current one, remove the previous one
-        if len(coords)>2:
+        if len(coords)>=2:
             if euclideanDistance(coords[-1][0], coords[-2][0]) < 200:
                 del coords[-2]
         
@@ -373,6 +383,7 @@ destroyAllWindows()
 
 ballArray = []
 # Create inbetween points for the ball points found
+# Try to fix the loop later
 while len(coords)>1:
     time = coords[0][3]
     location = [coords[0][1][0],coords[0][2][1]]
@@ -383,21 +394,32 @@ while len(coords)>1:
         y = int(location[1]+((i-time)/timeDiff)*(coords[0][2][1]-location[1]))
         ballArray.append(((x,y), i))       
 
+ballArray.append(((coords[0][1][0], coords[0][2][1]), coords[0][3]))
+
 # Overlay ball information on the previous video
 clip = VideoWriter('../Videos/Video1.mp4',fourcc,25.0,(widthP,heightP))
 counter = 0
 video = VideoCapture('../Videos/Video.mp4')
+writeFlag = False
 while video.isOpened():
     ret, frame = video.read()
     if frame is None:
         break
     
     counter += 1
-    for i in range(len(ballArray)):
-        if counter == ballArray[i][1]:
-            circle(frame, (ballArray[i][0]), 4,(255,0,0),2)
-            break
-        
+
+    # for i in range(len(ballArray)):
+    #     if counter == ballArray[i][1]:
+    #         circle(frame, (ballArray[i][0]), 4,(255,0,0),2)
+    #         break
+
+    if counter == ballArray[0][1]:
+        writeFlag = True
+
+    if (writeFlag):
+        index = counter - ballArray[0][1]
+        circle(frame, (ballArray[index][0]), 4,(255,0,0),2)
+    
     clip.write(frame)
     imshow("Frame", frame)
     if waitKey(1) == ord("q"):
