@@ -1,4 +1,4 @@
-from numpy import pi, ones, zeros, uint8, where, cos, sin
+from numpy import pi, ones, zeros, uint8, where, cos, sin, sqrt
 from cv2 import VideoCapture, cvtColor, Canny, line, imshow, waitKey, destroyAllWindows, COLOR_BGR2GRAY, HoughLinesP
 from cv2 import threshold, THRESH_BINARY, dilate, floodFill, circle, HoughLines, erode, rectangle, VideoWriter, VideoWriter_fourcc
 from TraceHeader import videoFile, findIntersection, calculatePixels
@@ -82,6 +82,7 @@ flag = [0,0,0,0]
 coords = []
 minDist1 = height*width
 minDist2 = height*width
+TotalVelocity = 0
 
 while video.isOpened():
     ret, frame = video.read()
@@ -351,11 +352,14 @@ while video.isOpened():
                 # Find locations of ball bounce
 
                 if ball_detector.xy_coordinates[-2][0] is not None:
-
+                    if ball_detector.xy_coordinates[-3][0] is not None:
+                        prevTotalVelocity = TotalVelocity
                     xVelocity = ball[0] - ballPrev[0]
                     yVelocity = ball[1] - ballPrev[1]
-                    
-                    print(xVelocity, yVelocity)
+                    TotalVelocity = sqrt(xVelocity**2 + yVelocity**2)
+                    if ball_detector.xy_coordinates[-3][0] is not None:
+                        print(TotalVelocity - prevTotalVelocity)
+                                      
                     
 
         
