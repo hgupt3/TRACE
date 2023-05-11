@@ -8,11 +8,11 @@ checkPath(videoFile)
 frameWidth = int(video.get(3))
 frameHeight = int(video.get(4))
 
-widthP = int(967/1.5)
-heightP = int(1585/1.5)
+widthP = int(967)
+heightP = int(1585)
 
-width = int(967/1.5)
-height = int(1585/1.5)
+width = int(967)
+height = int(1585)
 
 ratio = (1097/2377)
 courtHeight = int(height * 0.6)
@@ -33,17 +33,18 @@ def courtMap(frame, top_left, top_right, bottom_left, bottom_right):
     return dst, M
 
 def showLines(frame):
-    rectangle(frame, (0,0),(width,height),(255,0,0),6)
-    line(frame, courtTL, courtTR, (0, 0, 255), 2)
-    line(frame, courtBL, courtBR, (0, 0, 255), 2)
-    line(frame, courtTL, courtBL, (0, 0, 255), 2)
-    line(frame, courtTR, courtBR, (0, 0, 255), 2)
+    rectangle(frame, (0,0),(width,height),(255,255,255),6)
+    rectangle(frame, (xOffset,yOffset), (courtWidth+xOffset,courtHeight+yOffset), (255, 255, 255), 2)
+    rectangle(frame, (xOffset,yOffset+int(courtHeight*0.5)), (courtWidth+xOffset,yOffset+int(courtHeight*0.5)), (255, 255, 255), 2)
+    rectangle(frame, (xOffset+int(courtWidth*0.124886),yOffset), (courtWidth+xOffset-int(courtWidth*0.124886),courtHeight+yOffset), (255, 255, 255), 2)
+    rectangle(frame, (xOffset+int(courtWidth*0.124886),yOffset+int(courtHeight*0.23054)), (courtWidth+xOffset-int(courtWidth*0.124886),courtHeight+yOffset-int(courtHeight*0.23054)), (255, 255, 255), 2)
+    rectangle(frame, (xOffset+int(courtWidth*0.5),yOffset+int(courtHeight*0.23054)), (courtWidth+xOffset-int(courtWidth*0.5),courtHeight+yOffset-int(courtHeight*0.23054)), (255, 255, 255), 2)
     return frame
 
 def showPoint(frame, M, point):
     points = float32([[point]])
     transformed = perspectiveTransform(points, M)[0][0]
-    circle(frame, (int(transformed[0]), int(transformed[1])), radius=0, color=(0, 0, 255), thickness=20)
+    circle(frame, (int(transformed[0]), int(transformed[1])), radius=0, color=(0, 0, 255), thickness=25)
     return frame
 
 def givePoint(M, point):

@@ -307,13 +307,13 @@ while video.isOpened():
         body2.yAvg = coeff * body2.y + (1. - coeff) * body2.yAvg
         
         # Calculate euclidian distance between average of feet and hand indexes for both players
-        circleRadiusBody1 = int(0.75 * euclideanDistance(nosePoints[0], [body1.x, body1.y]))
+        circleRadiusBody1 = int(0.65 * euclideanDistance(nosePoints[0], [body1.x, body1.y]))
         circleRadiusBody2 = int(0.6 * euclideanDistance(nosePoints[1], [body2.x, body2.y]))
         
         # Distorting frame and outputting results
         processedFrame, M = courtMap(frame, NtopLeftP, NtopRightP, NbottomLeftP, NbottomRightP)
         # Create black background
-        # rectangle(processedFrame, (0,0),(967,1585),(0,0,0),2000)
+        rectangle(processedFrame, (0,0),(967,1585),(188,145,103),2000)
         processedFrame = showLines(processedFrame)
 
         processedFrame = showPoint(processedFrame, M, [body1.xAvg,body1.yAvg])
@@ -428,7 +428,7 @@ while video.isOpened():
 
     for i in range(len(ballArray)):
         if counter == ballArray[i][1]:
-            circle(frame, (ballArray[i][0]), 4,(255,0,0),2)
+            circle(frame, (ballArray[i][0]), 4,(0,255,255),3)
             break
         
     # for i in range(len(accelerations)):
@@ -444,12 +444,9 @@ while video.isOpened():
         
     if (writeFlag):
         index = counter - ballArray[0][1]
-        circle(frame, (ballArray[index][0]), 4,(255,0,0),2)
+        circle(frame, (ballArray[index][0]), 2,(0,255,255),3)
     
     clip.write(frame)
-    imshow("Frame", frame)
-    if waitKey(100000) == ord("q"):
-        break
 
 video.release()
 clip.release()
