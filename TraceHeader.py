@@ -2,7 +2,7 @@ from os import path
 from sys import exit
 
 # Video to be used placed in Clips folder
-videoFile = '../Videos/Clips/Clip3.mp4'
+videoFile = '../Videos/Clips/Clip5.mp4'
 
 def checkBounds(frame1, frame2):
     flag = 0

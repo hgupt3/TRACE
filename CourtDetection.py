@@ -15,6 +15,7 @@ height = int(video.get(4))
 
 fourcc = VideoWriter_fourcc(*'mp4v')
 clip = VideoWriter('../Videos/Video.mp4',fourcc,25.0,(widthP,heightP))
+processedFrame = None
 
 # Ratios of the crop width, height, and offsets
 # If centered is 1, program ignores offset and centers frame
@@ -47,14 +48,14 @@ counter = 0
 mp_pose = solutions.pose
 
 class body1:
-    pose = mp_pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25)
+    pose = mp_pose.Pose(model_complexity=2, min_detection_confidence=0.25, min_tracking_confidence=0.25)
     x: int
     xAvg: float = 0
     y: int
     yAvg: float = 0
     
 class body2:
-    pose = mp_pose.Pose(model_complexity=0, min_detection_confidence=0.25, min_tracking_confidence=0.25) 
+    pose = mp_pose.Pose(model_complexity=2, min_detection_confidence=0.25, min_tracking_confidence=0.25) 
     x: int
     xAvg: float = 0
     y: int
@@ -77,12 +78,13 @@ NbottomRightP = None
 ball_detector = BallDetector('TrackNet/Weights.pth', out_channels=2)
 ballProximity = []
 ball = None
+lastSeen = None
 handPoints = None
 flag = [0,0,0,0]
 coords = []
 minDist1 = height*width
 minDist2 = height*width
-TotalVelocity = 0
+velocities = []
 
 while video.isOpened():
     ret, frame = video.read()
@@ -305,7 +307,7 @@ while video.isOpened():
         body2.yAvg = coeff * body2.y + (1. - coeff) * body2.yAvg
         
         # Calculate euclidian distance between average of feet and hand indexes for both players
-        circleRadiusBody1 = int(0.7 * euclideanDistance(nosePoints[0], [body1.x, body1.y]))
+        circleRadiusBody1 = int(0.75 * euclideanDistance(nosePoints[0], [body1.x, body1.y]))
         circleRadiusBody2 = int(0.6 * euclideanDistance(nosePoints[1], [body2.x, body2.y]))
         
         # Distorting frame and outputting results
@@ -321,6 +323,7 @@ while video.isOpened():
         ball_detector.detect_ball(frame)
         if ball_detector.xy_coordinates[-1][0] is not None:
             ball = ball_detector.xy_coordinates[-1]
+            lastSeen = counter
         
         # Draw a circle around both hands for both players
         # circle(frame, (handPoints[0]), circleRadiusBody1, (255,0,0), 2) # left
@@ -352,17 +355,15 @@ while video.isOpened():
                 # Find locations of ball bounce
 
                 if ball_detector.xy_coordinates[-2][0] is not None:
-                    if ball_detector.xy_coordinates[-3][0] is not None:
-                        prevTotalVelocity = TotalVelocity
                     xVelocity = ball[0] - ballPrev[0]
-                    yVelocity = ball[1] - ballPrev[1]
-                    TotalVelocity = sqrt(xVelocity**2 + yVelocity**2)
-                    if ball_detector.xy_coordinates[-3][0] is not None:
-                        print(TotalVelocity - prevTotalVelocity)
-                                      
-                    
+                    yVelocity = (ball[1] - ballPrev[1])*(1+(height-ball[1])*0.4/height)
+                    if withinCircle(handPoints[3], circleRadiusBody2, ball) or withinCircle(handPoints[1], circleRadiusBody1, ball):
+                        within = True
+                    else:
+                        within = False
+                    velocities.append(([xVelocity,yVelocity], counter, givePoint(M, ball), within))
+                        
 
-        
         # If the previous ball coordinate is close to the current one, remove the previous one
         if len(coords)>=2:
             if euclideanDistance(coords[-1][0], coords[-2][0]) < 200:
@@ -373,21 +374,34 @@ while video.isOpened():
             circle(frame, coords[i][0], 4, (0,0,255), 4)
     
     # Write processed frame to clip
-    clip.write(processedFrame)
+    if processedFrame is not None:    
+        clip.write(processedFrame)
     imshow("Frame", frame)
     if waitKey(1) == ord("q"):
         break
 
 # Last found location of ball should be appended to ball array
-coords.append((ball, givePoint(M, ball), givePoint(M, ball), counter))
+coords.append((ball, givePoint(M, ball), givePoint(M, ball), lastSeen))
 
 clip.release()
 video.release()
 destroyAllWindows()
 
-ballArray = []
+accelerations = []
+for i in range(2,len(velocities)):
+    if velocities[i][1]-2 == velocities[i-2][1] and velocities[i-1][3] is False:
+        xAcceleration = (velocities[i][0][0]-velocities[i-2][0][0])/2
+        yAcceleration = (velocities[i][0][1]-velocities[i-2][0][1])/2
+        accelerations.append((int(yAcceleration), velocities[i][1]))
+        if abs(yAcceleration) > (height/77):
+            for k in range(len(coords)):
+                if coords[k][3] > velocities[i-1][1]:
+                    coords.insert(k, (velocities[i-1][2], velocities[i-1][2], velocities[i-1][2], velocities[i-1][1]))
+                    break
+        
 # Create inbetween points for the ball points found
 # Try to fix the loop later
+ballArray = []
 while len(coords)>1:
     time = coords[0][3]
     location = [coords[0][1][0],coords[0][2][1]]
@@ -412,21 +426,29 @@ while video.isOpened():
     
     counter += 1
 
-    # for i in range(len(ballArray)):
-    #     if counter == ballArray[i][1]:
-    #         circle(frame, (ballArray[i][0]), 4,(255,0,0),2)
+    for i in range(len(ballArray)):
+        if counter == ballArray[i][1]:
+            circle(frame, (ballArray[i][0]), 4,(255,0,0),2)
+            break
+        
+    # for i in range(len(accelerations)):
+    #     if counter == accelerations[i][1]:
+    #         print(accelerations[i])
     #         break
 
     if counter == ballArray[0][1]:
         writeFlag = True
 
+    if ballArray[-1][1] == counter:
+        writeFlag = False
+        
     if (writeFlag):
         index = counter - ballArray[0][1]
         circle(frame, (ballArray[index][0]), 4,(255,0,0),2)
     
     clip.write(frame)
     imshow("Frame", frame)
-    if waitKey(1) == ord("q"):
+    if waitKey(100000) == ord("q"):
         break
 
 video.release()
