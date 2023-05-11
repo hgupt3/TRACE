@@ -3,7 +3,6 @@ import torch.nn as nn
 import numpy as np
 import torch
 
-
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, pad, bias=True, bn=True):
         super().__init__()
@@ -21,7 +20,6 @@ class ConvBlock(nn.Module):
 
     def forward(self, x):
         return self.block(x)
-
 
 class BallTrackerNet(nn.Module):
     """

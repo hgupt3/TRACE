@@ -1,6 +1,5 @@
 from mediapipe import solutions
-from cv2 import VideoCapture,VideoWriter,imshow,cvtColor, COLOR_BGR2RGB, COLOR_RGB2BGR, circle, waitKey
-from TraceHeader import calculatePixels, videoFile
+from cv2 import cvtColor, COLOR_BGR2RGB, COLOR_RGB2BGR
 
 mp_pose = solutions.pose
 
