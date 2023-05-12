@@ -7,3 +7,6 @@ Collected data visualized
 Top-down view
 
 ![Final](https://github.com/hgupt3/TRACE/assets/112455192/916287fb-e507-40a1-8bb8-7ab9f3dafbc3)
+
+Ball detection from:
+Yu-Chuan Huang, "TrackNet: Tennis Ball Tracking from Broadcast Video by Deep Learning Networks," Master Thesis, advised by Tsì-Uí İk and Guan-Hua Huang, National Chiao Tung University, Taiwan, April 2018.
